@@ -1,0 +1,50 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package com.critterdroid.bio.act;
+
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.physics.box2d.Fixture;
+import com.critterdroid.bio.Material;
+import jcog.critterding.MotorNeuron;
+
+/**
+ *
+ * @author seh
+ */
+public class TowardsColorBody extends MotorNeuron {
+    private Material material;
+    private final Color color;
+    private final float momentum;
+
+    public TowardsColorBody(Fixture b, Color c, float momentum) {
+        super();
+        
+        this.momentum = momentum;
+        this.color = c;
+        
+        Object m = b.getUserData();
+        if (m instanceof Material) {
+            material = (Material)m;
+        }
+        else {
+            System.err.println(this + " material is null");
+        }
+        
+    }
+
+    
+    @Override
+    public void onFired() {
+        if (material!=null) {
+            material.color.r = material.color.r * momentum + color.r * (1.0f - momentum);
+            material.color.g = material.color.g * momentum + color.g * (1.0f - momentum);
+            material.color.b = material.color.b * momentum + color.b * (1.0f - momentum);
+        }
+                    
+    }
+    
+    
+    
+}
