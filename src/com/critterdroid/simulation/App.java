@@ -72,6 +72,7 @@ import org.lwjgl.opengl.GL11;
  * the editor.
  */
 public class App implements ApplicationListener, InputProcessor {
+    private static final int positionIterations = 4;
 
     final float minDT = 0.005f;
     final float maxDT = 0.02f;
@@ -99,20 +100,36 @@ public class App implements ApplicationListener, InputProcessor {
     private Simulation sim;
     public final Vector2 gravity = new Vector2(0, 0);
     float defaultLineWidth = 4.0f;
-
-    //http://code.google.com/p/libgdx/wiki/ProjectSetup
-    public static void main(String[] args) {
+    int numOvalSegments = 13;
+    boolean fillPolygons = true;
+    
+    public static void run(Simulation s, String title, int width, int height) {
         LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
-        config.width = 1280;
-        config.height = 720;
-        config.title = "Critterdroid";
+        config.width = width;
+        config.height = height;
+        config.title = title;
         config.useGL20 = false;
         config.forceExit = true;
         config.vSyncEnabled = false;
 
-        new LwjglApplication(new App(new SeHSpiderSimulation()), config);
-        //new LwjglApplication(new App(new ArmSimulation()), config);
+        new LwjglApplication(new App(s), config);
+        
     }
+
+//    //http://code.google.com/p/libgdx/wiki/ProjectSetup
+//    public static void main(String[] args) {
+//        LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
+//        config.width = 1280;
+//        config.height = 720;
+//        config.title = "Critterdroid";
+//        config.useGL20 = false;
+//        config.forceExit = true;
+//        config.vSyncEnabled = false;
+//
+//        new LwjglApplication(new App(new SeHSpiderSimulation()), config);
+//        //new LwjglApplication(new App(new ArmSimulation()), config);
+//    }
+    
     float targetZoom;
     Vector3 camPos;
     private OrthographicCamera cam;
@@ -126,6 +143,7 @@ public class App implements ApplicationListener, InputProcessor {
     public Window window;
     
     private boolean displayUI = false;
+    private final int velocityIterations = 2;
 
     public App(Simulation s) {
         this.sim = s;
@@ -407,13 +425,10 @@ public class App implements ApplicationListener, InputProcessor {
     
     final int MAX_SEGMENTS = 16;
     FloatBuffer fbuffer = BufferUtils.createFloatBuffer(MAX_SEGMENTS * 2);
-    float sx, sy;
     int psegments;
     //ByteBuffer cbuffer = BufferUtils.createByteBuffer(MAX_SEGMENTS * 4);
     
     void initPolygon(final float sx, final float sy) {
-        this.sx = sx;
-        this.sy = sy;
         fbuffer.rewind();
         fbuffer.put(sx);
         fbuffer.put(sy);
@@ -427,9 +442,6 @@ public class App implements ApplicationListener, InputProcessor {
     }
 
     void drawPolygon(final boolean filled) {
-        fbuffer.put(sx);
-        fbuffer.put(sy);
-        psegments++;
         fbuffer.rewind();
         
         Gdx.gl11.glEnableClientState(GL11.GL_VERTEX_ARRAY);
@@ -438,7 +450,7 @@ public class App implements ApplicationListener, InputProcessor {
         //Gdx.gl11.glColorPointer(4, GL11.GL_UNSIGNED_BYTE, 0, cbuffer);    
         Gdx.gl11.glVertexPointer(2, GL11.GL_FLOAT, 0, fbuffer);
 
-        Gdx.gl11.glDrawArrays((filled) ? GL11.GL_TRIANGLE_FAN : GL10.GL_LINE_LOOP, 0, psegments+1);
+        Gdx.gl11.glDrawArrays((filled) ? GL11.GL_TRIANGLE_FAN : GL10.GL_LINE_LOOP, 0, psegments);
         //glDrawArrays(GL_TRIANGLE_STRIP, 0, 10);
         
         Gdx.gl11.glDisableClientState(GL11.GL_COLOR_ARRAY);
@@ -465,59 +477,21 @@ public class App implements ApplicationListener, InputProcessor {
             t+=dt;
         }
         
-        drawPolygon(true);
+        drawPolygon(filled);
     }
     
     public void drawPolygon(final float cx, final float cy, final PolygonShape ps, final float angle, final boolean filled) {
         final float cf = (float) Math.cos(angle);
         final float sf = (float) Math.sin(angle);
                 
-        if (!filled) {
-                ps.getVertex(0, ve);
-
-                float px = 0;
-                float py = 0;
-                float apx = px;
-                float apy = py;
-
-
-                for (int v = 0; v < ps.getVertexCount(); v++) {
-                    ps.getVertex(v, ve);
-
-                    //x' = x cos f - y sin f
-                    //y' = y cos f + x sin f
-
-
-                    float x = ve.x * cf - ve.y * sf;
-                    float y = ve.y * cf + ve.x * sf;
-
-                    x += cx;
-                    y += cy;
-
-                    if (v > 0) {
-                        drawLine(px, py, x, y);
-                    } else {
-                        apx = x;
-                        apy = y;
-                    }
-
-                    //g.drawOval(x, y, 50, 50, 7);
-                    //System.out.println(" " + x + " " + y);
-
-                    px = x;
-                    py = y;
-                }
-                drawLine(apx, apy, px, py);
-        }
-        else {
             final int segments = ps.getVertexCount();
             
             if (segments >= MAX_SEGMENTS) {
                 return;
             }
             
-            for (int v = 0; v <= segments; v++) {
-                ps.getVertex(v % segments, ve);
+            for (int v = 0; v < segments; v++) {
+                ps.getVertex(v, ve);
 
                 //x' = x cos f - y sin f
                 //y' = y cos f + x sin f
@@ -537,9 +511,8 @@ public class App implements ApplicationListener, InputProcessor {
                 }                
             }
             
-            drawPolygon(true);                           
+            drawPolygon(filled);                           
             
-        }
     }
     
 
@@ -569,7 +542,7 @@ public class App implements ApplicationListener, InputProcessor {
         final Vector2 center = body.getWorldCenter();
         final float angle = body.getAngle();
 
-        final int numOvalSegments = 7;
+        setLineWidth(defaultLineWidth);
 
         for (final Fixture f : body.getFixtureList()) {
             final Object ud = f.getUserData();
@@ -580,21 +553,13 @@ public class App implements ApplicationListener, InputProcessor {
                 setColor(gray); //was gray
             }
 
-            Shape s = f.getShape();
+            final Shape s = f.getShape();
             if (s instanceof CircleShape) {
                 CircleShape cs = (CircleShape) s;
-
-                setLineWidth(defaultLineWidth);
-
-                drawEllipse(center.x, center.y, cs.getRadius(), cs.getRadius(), numOvalSegments, angle, true);
-                //System.out.println(ox + " " + oy);
+                drawEllipse(center.x, center.y, cs.getRadius(), cs.getRadius(), numOvalSegments, angle, fillPolygons);
             } else if (s instanceof PolygonShape) {
                 PolygonShape ps = (PolygonShape) s;
-
-                setLineWidth(defaultLineWidth);
-
-                drawPolygon(center.x, center.y, ps, angle, true);
-
+                drawPolygon(center.x, center.y, ps, angle, fillPolygons);
             } else {
                 //System.out.println("unrendered: " + s);
             }
@@ -684,9 +649,7 @@ public class App implements ApplicationListener, InputProcessor {
 
     public void update(float dt) {
 
-        //keep track of time
         if (!paused) {
-            //float dt = ((float) delta) / 1000f;
 
             for (Critter c : critters) {
                 c._update(dt);
@@ -700,10 +663,8 @@ public class App implements ApplicationListener, InputProcessor {
             }
 
             //run the world simulation
-            physicsWorld.step(dt, 2, 4);
+            physicsWorld.step(dt, velocityIterations, positionIterations);
 
-//            timePassed += delta;
-//            timeTillNextBall -= delta;
         }
 
     }

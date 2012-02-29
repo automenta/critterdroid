@@ -68,7 +68,7 @@ public class DistributedSpider extends Critter {
     final boolean copyPeripheralMotorsForCortex = true;
     
     
-    final boolean includeRectangleSegments = true;
+    final boolean includeRectangleSegments = false;
     final float rectangleLimbWidthRatio = 0.9f;
     final float rectangleLimbLengthRatio = 1.8f;
     final float rectangleLimbDensity = 0.2f;

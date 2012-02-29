@@ -15,7 +15,6 @@ import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Window;
 import com.critterdroid.bio.Simulation;
-import com.critterdroid.bio.act.RotateRevoluteJoint;
 import com.critterdroid.bio.brain.RandomWiring;
 import com.critterdroid.entities.DistributedSpider;
 import com.critterdroid.entities.DistributedSpider.BrainWiring;
@@ -26,7 +25,6 @@ import java.util.ArrayList;
 import jcog.critterding.CritterdingBrain;
 import jcog.critterding.CritterdingNeuron;
 import jcog.critterding.InterNeuron;
-import jcog.critterding.MotorNeuron;
 import jcog.math.RandomNumber;
 
 /**
@@ -47,10 +45,10 @@ public class SeHSpiderSimulation implements Simulation {
         
         //BrainWiring wiring = new StructuredWiring(3);
         //BrainWiring wiring = new RandomWiring(numNeurons, minSynapses, maxSynapses, percentChanceSensorySynapse, percentChanceMotorNeuron, potentialDecay)
-        BrainWiring cWiring = new RandomWiring(1024, 4, 10, 0.1, 0.1, 0.9);
+        BrainWiring cWiring = new RandomWiring(2048, 4, 10, 0.1, 0.1, 0.9);
         BrainWiring lWiring = new RandomWiring(128, 2, 4, 0.35, 0.35, 0.9);
                 
-        final DistributedSpider s = new DistributedSpider(new Vector2(600, 400), 3, 1, cWiring, lWiring, 6, 6, 64);        
+        final DistributedSpider s = new DistributedSpider(new Vector2(300, 200), 3, 2, cWiring, lWiring, 6, 6, 32);        
         sim.addCritter(s);        
         
         {
@@ -307,7 +305,7 @@ public class SeHSpiderSimulation implements Simulation {
             roof.setTransform(new Vector2(app.getWidth()/2.0f, 20), 0);
         }
 
-        for (int i = 0; i < 7; i++) {
+        for (int i = 0; i < 4; i++) {
             addCircleRock(app, 100+30*i, 100, RandomNumber.getFloat(10, 30), new Color(0.3f, 1.0f- ((float)Math.random())*0.3f, 0.15f, 1.0f));
             addRectRock(app, 100+30*i, 100, RandomNumber.getFloat(30, 50), new Color(1.0f - ((float)Math.random())*0.3f, 0.3f, 0.15f, 1.0f));
         }
@@ -325,4 +323,7 @@ public class SeHSpiderSimulation implements Simulation {
         sim.createRectangle(r, r*1.6f, x, y, 0, c, 4.0f);
     }
     
+    public static void main(String[] args) {
+        App.run(new SeHSpiderSimulation(), "Spiders", 640, 480);
+    }
 }
