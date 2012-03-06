@@ -38,9 +38,9 @@ public class TowardsColorBody extends MotorNeuron {
     @Override
     public void onFired() {
         if (material!=null) {
-            material.color.r = material.color.r * momentum + color.r * (1.0f - momentum);
-            material.color.g = material.color.g * momentum + color.g * (1.0f - momentum);
-            material.color.b = material.color.b * momentum + color.b * (1.0f - momentum);
+            material.fillColor.r = material.fillColor.r * momentum + color.r * (1.0f - momentum);
+            material.fillColor.g = material.fillColor.g * momentum + color.g * (1.0f - momentum);
+            material.fillColor.b = material.fillColor.b * momentum + color.b * (1.0f - momentum);
         }
                     
     }

@@ -22,7 +22,6 @@ import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.physics.box2d.CircleShape;
 import com.badlogic.gdx.physics.box2d.Fixture;
-import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.QueryCallback;
 import com.badlogic.gdx.physics.box2d.Shape;
@@ -72,15 +71,23 @@ import org.lwjgl.opengl.GL11;
  * the editor.
  */
 public class App implements ApplicationListener, InputProcessor {
-    private static final int positionIterations = 4;
 
-    final float minDT = 0.005f;
-    final float maxDT = 0.02f;
+    
     /**
      * handles the physics
      */
-    public World physicsWorld;
+    public World world;
     boolean paused = false;
+    
+    private boolean displayUI = true;
+    
+    //The suggested iteration count for Box2D is 8 for velocity and 3 for position. You can tune this number to your liking, just keep in mind that this has a trade-off between speed and accuracy. Using fewer iterations increases performance but accuracy suffers. Likewise, using more iterations decreases performance but improves the quality of your simulation. For this simple example, we don't need much iteration. Here are our chosen iteration counts.    
+    private int velocityIterations = 8;
+    private int positionIterations = 3;
+    
+    float defaultFriction = 0.3f;
+    float simDT;
+    
     /**
      * indicates what state to go to next if nextState==getID(), do not change states
      */
@@ -92,16 +99,14 @@ public class App implements ApplicationListener, InputProcessor {
     /**
      * our ground box *
      */
-    Body groundBody;
+    public static Body groundBody;
     /**
      * our mouse joint *
      */
     private MouseJoint mouseJoint = null;
     private Simulation sim;
-    public final Vector2 gravity = new Vector2(0, 0);
-    float defaultLineWidth = 4.0f;
-    int numOvalSegments = 13;
-    boolean fillPolygons = true;
+    
+    int numOvalSegments = 7;
     
     public static void run(Simulation s, String title, int width, int height) {
         LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
@@ -110,8 +115,9 @@ public class App implements ApplicationListener, InputProcessor {
         config.title = title;
         config.useGL20 = false;
         config.forceExit = true;
-        config.vSyncEnabled = false;
-
+        config.vSyncEnabled = true;
+        config.samples = 1;
+        
         new LwjglApplication(new App(s), config);
         
     }
@@ -142,8 +148,6 @@ public class App implements ApplicationListener, InputProcessor {
     @Deprecated
     public Window window;
     
-    private boolean displayUI = false;
-    private final int velocityIterations = 2;
 
     public App(Simulation s) {
         this.sim = s;
@@ -159,39 +163,40 @@ public class App implements ApplicationListener, InputProcessor {
 
     @Override
     public void create() {
-
+        simDT = 1.0f / ((float)LwjglApplicationConfiguration.getDesktopDisplayMode().refreshRate);
+                
         //clear the world and physics images
-        physicsWorld = new World(gravity, false);
+        world = new World(new Vector2(0,0), true);
 
         final int WIDTH = Gdx.graphics.getWidth();
         final int HEIGHT = Gdx.graphics.getHeight();
 
         cam = new OrthographicCamera(WIDTH, HEIGHT);
-        cam.position.set(WIDTH / 2, HEIGHT / 2, 0);
+        cam.position.set(0, HEIGHT, 0);
 
-        targetZoom = cam.zoom;
+        targetZoom = cam.zoom = 0.01f;
         camPos = new Vector3(cam.position);
 
         glViewport = new Rectangle(0, 0, WIDTH, HEIGHT);
 
 
-        {
-            PolygonShape groundPoly = new PolygonShape();
-            groundPoly.setAsBox(50, 1);
-
-            BodyDef groundBodyDef = new BodyDef();
-            groundBodyDef.type = BodyType.StaticBody;
-            groundBody = physicsWorld.createBody(groundBodyDef);
-            // finally we add a fixture to the body using the polygon
-            // defined above. Note that we have to dispose PolygonShapes
-            // and CircleShapes once they are no longer used. This is the
-            // only time you have to care explicitely for memomry managment.
-            FixtureDef fixtureDef = new FixtureDef();
-            fixtureDef.shape = groundPoly;
-            fixtureDef.filter.groupIndex = 0;
-            groundBody.createFixture(fixtureDef);
-            groundPoly.dispose();
-        }
+//        {
+//            PolygonShape groundPoly = new PolygonShape();
+//            groundPoly.setAsBox(1, 1);
+//
+//            BodyDef groundBodyDef = new BodyDef();
+//            groundBodyDef.type = BodyType.StaticBody;
+//            groundBody = world.createBody(groundBodyDef);
+//            // finally we add a fixture to the body using the polygon
+//            // defined above. Note that we have to dispose PolygonShapes
+//            // and CircleShapes once they are no longer used. This is the
+//            // only time you have to care explicitely for memomry managment.
+//            FixtureDef fixtureDef = new FixtureDef();
+//            fixtureDef.shape = groundPoly;
+//            fixtureDef.filter.groupIndex = 0;
+//            groundBody.createFixture(fixtureDef);
+//            groundPoly.dispose();
+//        }
 
         createUI();
 
@@ -199,6 +204,10 @@ public class App implements ApplicationListener, InputProcessor {
 
     }
 
+    public void setGroundBody(Body b) {
+        groundBody = b;
+    }
+    
     //http://dpk.net/2011/03/10/libgdx-and-twl/
     //http://stackoverflow.com/questions/6498826/ui-api-for-libgdx
     protected void createUI() {
@@ -326,12 +335,15 @@ public class App implements ApplicationListener, InputProcessor {
         }
 
 
-        Iterator<Body> ib = physicsWorld.getBodies();
+        Iterator<Body> ib = world.getBodies();
         while (ib.hasNext()) {
             Body b = ib.next();
             renderBody(g, b);
         }
 
+        for (Critter c : critters) {
+            c.renderOverlay(g);
+        }
 
         //show the current time
 //        g.setColor(new Color(0, 0, 0, 0.5f));
@@ -341,9 +353,6 @@ public class App implements ApplicationListener, InputProcessor {
 //                (container.getWidth()) / 2 - 48,
 //                10);
 
-        for (Critter c : critters) {
-            c.renderOverlay(g);
-        }
         
         if (displayUI)
             renderUI(delta);
@@ -542,38 +551,67 @@ public class App implements ApplicationListener, InputProcessor {
         final Vector2 center = body.getWorldCenter();
         final float angle = body.getAngle();
 
-        setLineWidth(defaultLineWidth);
-
         for (final Fixture f : body.getFixtureList()) {
             final Object ud = f.getUserData();
+            
+            Color fillColor = null;
+            Color strokeColor = null;
+            int strokeWidth = 0;
+            
             if (ud instanceof Material) {
                 final Material m = (Material) ud;
-                setColor(m.color);
+                fillColor = m.fillColor;
+                strokeColor = m.strokeColor;
+                strokeWidth = m.strokeWidth;
             } else {
-                setColor(gray); //was gray
+                fillColor = gray;
             }
 
             final Shape s = f.getShape();
             if (s instanceof CircleShape) {
                 CircleShape cs = (CircleShape) s;
-                drawEllipse(center.x, center.y, cs.getRadius(), cs.getRadius(), numOvalSegments, angle, fillPolygons);
+                
+                if (fillColor!=null) {
+                    setColor(fillColor);
+                    drawEllipse(center.x, center.y, cs.getRadius(), cs.getRadius(), numOvalSegments, angle, true);
+                }
+                if ((strokeColor!=null) && (strokeWidth > 0)) {
+                    setColor(strokeColor);
+                    setLineWidth(strokeWidth);
+                    drawEllipse(center.x, center.y, cs.getRadius(), cs.getRadius(), numOvalSegments, angle, false);
+                }
+                
+                
             } else if (s instanceof PolygonShape) {
                 PolygonShape ps = (PolygonShape) s;
-                drawPolygon(center.x, center.y, ps, angle, fillPolygons);
+                
+                if (fillColor!=null) {
+                    setColor(fillColor);
+                    drawPolygon(center.x, center.y, ps, angle, true);
+                }
+                if ((strokeColor!=null) && (strokeWidth > 0)) {
+                    setColor(strokeColor);
+                    setLineWidth(strokeWidth);
+                    drawPolygon(center.x, center.y, ps, angle, false);                    
+                }
+                
             } else {
                 //System.out.println("unrendered: " + s);
             }
         }
     }
 
-    private Body initBody(BodyDef b, Shape shape, float x, float y, float density, Color c) {
+    private Body initBody(BodyDef b, Shape shape, float x, float y, float density, float friction, Color c) {
+        return initBody(b, shape, x, y, density, friction, new Material(c));
+    }
+    
+    private Body initBody(BodyDef b, Shape shape, float x, float y, float density, float friction, Material m) {
         //call physicsWorld.createBody to actually make the body
-        Body body = physicsWorld.createBody(b);
+        Body body = world.createBody(b);
 
         Fixture f = body.createFixture(shape, density);
-
-        f.setUserData(new Material(c));
-
+        f.setFriction(friction);
+        f.setUserData(m);
 
         //put the body and image together
         body.setTransform(x, y, 0);
@@ -581,15 +619,13 @@ public class App implements ApplicationListener, InputProcessor {
         //ballBody.getFixtureList().get(0).setRestitution(1);//keep all energy
 
 
-        body.getFixtureList().get(0).setFriction(0.1f);
-
         //a circle shape is moved from it's center, so for the image to follow the
         //shape right, it must be moved to the upper left corner
         //ball.setOffset(-ballImage.getWidth()/2, -ballImage.getWidth()/2);
         return body;
     }
 
-    public Body createRectangle(float w, float h, float x, float y, float angle, Color c, float density) {
+    public Body newRectangle(float w, float h, float x, float y, float angle, float density, Material m) {
         PolygonShape s = new PolygonShape();
         s.setAsBox(w / 2.0f, h / 2.0f, new Vector2(0, 0), angle);
 
@@ -598,10 +634,10 @@ public class App implements ApplicationListener, InputProcessor {
         b.type = BodyType.DynamicBody;
 
 
-        return initBody(b, s, x, y, density, c);
+        return initBody(b, s, x, y, density, defaultFriction, m);
     }
 
-    public Body createBall(float radius, float x, float y, Color c, float density) {
+    public Body newCircle(float radius, float x, float y, float density, Material m) {
         //create a shape for the ball
         CircleShape circle = new CircleShape();
         circle.setPosition(new Vector2(0, 0));
@@ -611,7 +647,7 @@ public class App implements ApplicationListener, InputProcessor {
         BodyDef ballDef = new BodyDef();
         ballDef.type = BodyType.DynamicBody;
 
-        return initBody(ballDef, circle, x, y, density, c);
+        return initBody(ballDef, circle, x, y, density, defaultFriction, m);
     }
 
     public RevoluteJoint joinRevolute(Body a, Body b, float x, float y) {
@@ -623,7 +659,7 @@ public class App implements ApplicationListener, InputProcessor {
         jd.lowerAngle = -0.001f;
         jd.upperAngle = 0.001f;
 
-        RevoluteJoint j = (RevoluteJoint) physicsWorld.createJoint(jd);
+        RevoluteJoint j = (RevoluteJoint) world.createJoint(jd);
         return j;
     }
 
@@ -634,7 +670,7 @@ public class App implements ApplicationListener, InputProcessor {
         jd.collideConnected = true;
         jd.length = 0;
 
-        DistanceJoint j = (DistanceJoint) physicsWorld.createJoint(jd);
+        DistanceJoint j = (DistanceJoint) world.createJoint(jd);
         return j;
     }
 
@@ -643,27 +679,20 @@ public class App implements ApplicationListener, InputProcessor {
         jd.initialize(a, b, anchor);
 
 
-        WeldJoint j = (WeldJoint) physicsWorld.createJoint(jd);
+        WeldJoint j = (WeldJoint) world.createJoint(jd);
         return j;
     }
 
-    public void update(float dt) {
+    public void update(float realDT) {
 
         if (!paused) {
 
             for (Critter c : critters) {
-                c._update(dt);
-            }
-
-            if (dt < minDT) {
-                dt = minDT;
-            }
-            if (dt > maxDT) {
-                dt = maxDT;
+                c._update(simDT);
             }
 
             //run the world simulation
-            physicsWorld.step(dt, velocityIterations, positionIterations);
+            world.step(simDT, velocityIterations, positionIterations);
 
         }
 
@@ -674,6 +703,7 @@ public class App implements ApplicationListener, InputProcessor {
         Vector3 v = r.getEndPoint(1.0f);
         testPoint.set(v.x, getHeight() - v.y);
     }
+    
     /**
      * another temporary vector *
      */
@@ -739,12 +769,15 @@ public class App implements ApplicationListener, InputProcessor {
             // ask the world which bodies are within the given
             // bounding box around the mouse pointer
             hitBody = null;
-            physicsWorld.QueryAABB(callback, testPoint.x - 0.1f, testPoint.y - 0.1f, testPoint.x + 0.1f, testPoint.y + 0.1f);
+            world.QueryAABB(callback, testPoint.x - 0.1f, testPoint.y - 0.1f, testPoint.x + 0.1f, testPoint.y + 0.1f);
 
 
             // if we hit something we create a new mouse joint
             // and attach it to the hit body.
-            if (hitBody != null) {
+            if (groundBody == null) {
+                System.err.println(this + " has undefined groundBody.  Unable to create mouseJoint");
+            }
+            else if (hitBody != null)  {
                 MouseJointDef def = new MouseJointDef();
                 def.bodyA = groundBody;
                 def.bodyB = hitBody;
@@ -753,7 +786,7 @@ public class App implements ApplicationListener, InputProcessor {
                 def.maxForce = 15000.0f * hitBody.getMass();
 
 
-                mouseJoint = (MouseJoint) physicsWorld.createJoint(def);
+                mouseJoint = (MouseJoint) world.createJoint(def);
                 hitBody.setAwake(true);
             }
         }
@@ -769,7 +802,7 @@ public class App implements ApplicationListener, InputProcessor {
         if (button == 0) {
             // if a mouse joint exists we simply destroy it       
             if (mouseJoint != null) {
-                physicsWorld.destroyJoint(mouseJoint);
+                world.destroyJoint(mouseJoint);
                 mouseJoint = null;
             }
         } else if (button == 1) {

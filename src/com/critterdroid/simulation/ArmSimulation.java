@@ -13,7 +13,7 @@ import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.physics.box2d.joints.RevoluteJoint;
-import com.badlogic.gdx.scenes.scene2d.ui.Window;
+import com.critterdroid.bio.Material;
 import com.critterdroid.bio.Simulation;
 import com.critterdroid.bio.act.ServoRevoluteJoint;
 import com.critterdroid.bio.brain.MeshWiring;
@@ -24,7 +24,6 @@ import com.critterdroid.bio.feel.RevoluteJointAngle;
 import com.critterdroid.bio.feel.VelocityAngular;
 import com.critterdroid.bio.feel.VelocityAxis;
 import com.critterdroid.entities.Critter;
-import com.critterdroid.simulation.ui.MeshPanel;
 import java.util.LinkedList;
 import java.util.List;
 import jcog.critterding.BrainReport;
@@ -38,19 +37,19 @@ public class ArmSimulation implements Simulation {
 
     public class RobotArm extends Critter {
 
-        float baseLength = 60;
-        float baseWidth = 150.0f;
+        float baseLength = 0.5f;
+        float baseWidth = 0.5f;
 
-        int armSegments = 3;
+        int armSegments = 4;
         
-        float armLength = 65.0f;
-        float armWidth = 28.0f;
+        float armLength = 0.5f;
+        float armWidth = 0.1f;
         
         float servoRange = ((float)Math.PI / 2.0f) * 0.9f;
         int servoSteps = 6;
-        int numRetinasPerSegment = 8;
+        int numRetinasPerSegment = 32;
         
-        float visionDistance = 550f;
+        float visionDistance = 10.0f;
         
         CritterdingBrain brain = new CritterdingBrain();
         List<Retina> retinas = new LinkedList();
@@ -67,7 +66,9 @@ public class ArmSimulation implements Simulation {
         
         @Override
         public void init(App s) {
-            Body base = s.createRectangle(baseWidth, baseLength, ix, iy, 0, Color.WHITE, 160.0f);
+            Material m = new Material(Color.GRAY, Color.DARK_GRAY, 2);
+            
+            Body base = s.newRectangle(baseWidth, baseLength, ix, iy, 0, 160.0f, m);
 
         
             Body[] arm = new Body[armSegments];
@@ -80,13 +81,11 @@ public class ArmSimulation implements Simulation {
             y -= armLength*0.3;
             
             for (int i = 0; i < armSegments; i++) {
-                Body b = arm[i] = s.createRectangle(armWidth, armLength, x, y, 0, Color.WHITE, 2.0f);
+                
+                Body b = arm[i] = s.newRectangle(armWidth, armLength, x, y, 0, 1.0f, m);
                 
                 RevoluteJoint j = s.joinRevolute(arm[i], prev, x, y+armLength/2.0f);
 
-                //brain.addOutput(new RotateRevoluteJoint(rj, range, jointSpeed, false));
-                //brain.addOutput(new RotateRevoluteJoint(rj, range, jointSpeed, true));
-                
                 new ServoRevoluteJoint(brain, j, -servoRange, servoRange, servoSteps);
                 
                 brain.addInput(new RevoluteJointAngle(j));
@@ -112,14 +111,11 @@ public class ArmSimulation implements Simulation {
             }
             
             
-            int mHeight = 128;
-            int mWidth = 8;
-            
             //brainMesh = new MeshWiring(brain, mHeight, mWidth);
             //brainMesh.wireBrain(brain);
             
             //new RandomWiring(400, 4, 16, 0.25f, 0.1f, 0.9f).wireBrain(brain);
-            new RandomWiring(128, 2, 4, 0f, 0f, 0.9f).wireBrain(brain);
+            new RandomWiring(4096, 4, 16, 0.25f, 0.1f, 0.95f).wireBrain(brain);
             
             new BrainReport(brain);
             
@@ -144,9 +140,7 @@ public class ArmSimulation implements Simulation {
         public void renderUnderlay(Graphics g) {
 
             for (Retina r : retinas) {
-                App.setColor(r.getColor());
-                App.setLineWidth(2.0f);
-                App.drawLine(r.p1.x, r.p1.y, r.pint.x, r.pint.y);
+                r.draw();
             }
         }
 
@@ -160,26 +154,19 @@ public class ArmSimulation implements Simulation {
     @Override
     public void init(App app) {
 
-        World physicsWorld = app.physicsWorld;
+        World world = app.world;
         
-        physicsWorld.setGravity(new Vector2(0, 9.8f));
+        world.setGravity(new Vector2(0, 9.8f));
 
-        addWorldBox(app, physicsWorld);
+        addWorldBox(app, world, 10f, 7f, 0.2f);
         
-//        for (int i = 0; i < 7; i++) {
-//            addCircleRock(app, 100+30*i, 100, RandomNumber.getFloat(10, 30), new Color(0.3f, 1.0f- ((float)Math.random())*0.3f, 0.15f, 1.0f));
-//            addRectRock(app, 100+30*i, 100, RandomNumber.getFloat(30, 50), new Color(1.0f - ((float)Math.random())*0.3f, 0.3f, 0.15f, 1.0f));
-//        }
-        
-        //addCircleRock(sim, 500, 400, 80, new Color(1.0f, 0.3f, 0.5f));
-
-        RobotArm ra = new RobotArm(300, 700);
-        app.addCritter(ra);
+        app.addCritter(new RobotArm(0, 0));
         
         //app.addCritter(new RobotArm(500, 700));
 
         for (int i = 0; i < 8; i++) {
-            addCircleRock(app, 400f, 200f+i*30f, 16f, new Color(1.0f, 0.5f, 0.0f, 1.0f));
+            Material m = new Material(Color.ORANGE, new Color(1.0f, 0.9f, 0, 0.5f), 5);
+            addCircleRock(app, 2f, -2f+i*0.3f, 0.1f + ((float)Math.random()) * 0.2f, m);
         }
 
         
@@ -197,22 +184,22 @@ public class ArmSimulation implements Simulation {
         
     }
     
-        public void addCircleRock(App sim, float x, float y, float r, Color c) {
-            sim.createBall(r, x, y, c, 1.0f);
-        }
-        public void addRectRock(App sim, float x, float y, float r, Color c) {
-            sim.createRectangle(r, r*1.6f, x, y, 0, c, 4.0f);
-        }
+    public void addCircleRock(App sim, float x, float y, float r, Material m) {
+        sim.newCircle(r, x, y, 1.0f, m);
+    }
     
-    public void addWorldBox(final App app, final World physicsWorld) {
-        float wallThick = 8;
+//        public void addRectRock(App sim, float x, float y, float r, Color c) {
+//            sim.newRectangle(r, r*1.6f, x, y, 0, c, 4.0f);
+//        }
+    
+    public void addWorldBox(final App app, final World physicsWorld, float w, float h, float wallThick) {
         
         //create walls to keep the balls in bounds:
         PolygonShape verticalWall = new PolygonShape();
-        verticalWall.setAsBox(wallThick, app.getHeight()/2.0f);
+        verticalWall.setAsBox(wallThick, h/2f);
 
         PolygonShape horizontalWall = new PolygonShape();
-        horizontalWall.setAsBox(app.getWidth()/2.0f,  wallThick );
+        horizontalWall.setAsBox(w/2f,  wallThick );
 
         {
             BodyDef wallDef = new BodyDef();
@@ -220,33 +207,30 @@ public class ArmSimulation implements Simulation {
 
             //left wall:
             Body leftWall = physicsWorld.createBody(wallDef);
-            leftWall.createFixture(verticalWall, wallThick);
-            leftWall.setTransform(new Vector2(0, app.getHeight()/2.0f), 0);
+            leftWall.createFixture(verticalWall, 1);
+            leftWall.setTransform(new Vector2(-w/2, wallThick), 0);
         }
-
-        {
-            BodyDef wallDef = new BodyDef();
-            wallDef.type = BodyType.StaticBody;
-            
-            //right wall:
-            Body rightWall = physicsWorld.createBody(wallDef);
-            rightWall.createFixture(verticalWall, wallThick);
-            rightWall.setTransform(new Vector2(app.getWidth()-20, app.getHeight()/2.0f), 0);
-            //rightWall.setTransform(new Vector2(app.getWidth()-50, 0), 0);
-        }
-        
 
         {
             BodyDef wallDef = new BodyDef();
             wallDef.type = BodyType.StaticBody;
 
             //floor:
-            PolygonShape roofShape = new PolygonShape();
-            roofShape.setAsBox(app.getWidth()/2.0f, wallThick);
+            Body bottomWall = physicsWorld.createBody(wallDef);
+            bottomWall.createFixture(horizontalWall, 1);
+            bottomWall.setTransform(new Vector2(0, h/2), 0);
+            
+            app.setGroundBody(bottomWall);
+        }
 
-            Body roof = physicsWorld.createBody(wallDef);
-            roof.createFixture(roofShape, 1);
-            roof.setTransform(new Vector2(app.getWidth()/2.0f, app.getHeight()-20), 0);
+        {
+            BodyDef wallDef = new BodyDef();
+            wallDef.type = BodyType.StaticBody;
+
+            //right wall:
+            Body rightWall = physicsWorld.createBody(wallDef);
+            rightWall.createFixture(verticalWall, 1);
+            rightWall.setTransform(new Vector2(w/2, wallThick), 0);
         }
         
         {
@@ -254,14 +238,40 @@ public class ArmSimulation implements Simulation {
             wallDef.type = BodyType.StaticBody;
 
             //ceiling:
-            PolygonShape roofShape = new PolygonShape();
-            roofShape.setAsBox(app.getWidth()/2.0f, wallThick);
-
-            Body roof = physicsWorld.createBody(wallDef);
-            roof.createFixture(roofShape, 1);
-            roof.setTransform(new Vector2(app.getWidth()/2.0f, 20), 0);
+            Body topWall = physicsWorld.createBody(wallDef);
+            topWall.createFixture(horizontalWall, 1);
+            topWall.setTransform(new Vector2(0, -h/2), 0);
         }
+        
+//        {
+//            BodyDef wallDef = new BodyDef();
+//            wallDef.type = BodyType.StaticBody;
+//            
+//            //right wall:
+//            Body rightWall = physicsWorld.createBody(wallDef);
+//            rightWall.createFixture(verticalWall, wallThick);
+//            rightWall.setTransform(new Vector2(app.getWidth()-20, app.getHeight()/2.0f), 0);
+//            //rightWall.setTransform(new Vector2(app.getWidth()-50, 0), 0);
+//        }
+        
+
+        
+//        {
+//            BodyDef wallDef = new BodyDef();
+//            wallDef.type = BodyType.StaticBody;
+//
+//            //ceiling:
+//            PolygonShape roofShape = new PolygonShape();
+//            roofShape.setAsBox(app.getWidth()/2.0f, wallThick);
+//
+//            Body roof = physicsWorld.createBody(wallDef);
+//            roof.createFixture(roofShape, 1);
+//            roof.setTransform(new Vector2(app.getWidth()/2.0f, 20), 0);
+//        }
         
     }
     
+    public static void main(String[] args) {
+        App.run(new ArmSimulation(), "Arm", 1280, 720);
+    }
 }

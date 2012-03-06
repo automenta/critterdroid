@@ -10,6 +10,7 @@ import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.RayCastCallback;
 import com.critterdroid.bio.Material;
+import com.critterdroid.simulation.App;
 import jcog.critterding.CritterdingBrain;
 import jcog.critterding.SenseNeuron;
 
@@ -99,10 +100,9 @@ public class Retina implements RayCastCallback {
 
     @Override
     public float reportRayFixture(Fixture fixture, Vector2 point, Vector2 normal, float fraction) {
-        if (fixture.getBody() == body) {
+        if (fixture.getBody() == body)
             return fraction;
-        }
-
+        
         float currDist = point.dst(p1);
         if ((currDist > bestDist) && (bestDist > 0)) {
             return fraction;
@@ -124,7 +124,7 @@ public class Retina implements RayCastCallback {
            /* c.r = (float) (material.color.r * v);
             c.g = (float) (material.color.g * v);
             c.b = (float) (material.color.b * v);*/
-            seeColor((float) (material.color.r * v),(float) (material.color.g * v),(float) (material.color.b * v));
+            seeColor((float) (material.fillColor.r * v),(float) (material.fillColor.g * v),(float) (material.fillColor.b * v));
         } else {
             material = null;
            // c.r = c.g = c.b = v;
@@ -142,5 +142,14 @@ public class Retina implements RayCastCallback {
 
     public void setVisionDistance(float v) {
         this.maxDistance = v;
+    }
+
+    public void draw() {
+        if ((p1.x==pint.x) && (p1.y == pint.y))
+            return;
+        
+        App.setColor(getColor());
+        App.setLineWidth(2.0f);
+        App.drawLine(p1.x, p1.y, pint.x, pint.y);
     }
 }

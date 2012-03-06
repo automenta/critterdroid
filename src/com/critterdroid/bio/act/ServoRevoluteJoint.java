@@ -14,17 +14,20 @@ import jcog.critterding.MotorNeuron;
  */
 public class ServoRevoluteJoint  {
     private final RevoluteJoint joint;
-    private float factor;
-    private float wiggle = 0.05f;
-
     
-    final float maxTorque = 1000.0f;
+    private float wiggle = 0.01f;
+    
+    final float maxTorque = 10.0f;
+    
     float dr = 0;
     private final float range;
     private final float dt;
     float stepActivation[];
     private final int steps;
-    float momentum = 0.99f;
+
+    float stepMomentum = 0.5f;
+    float rotationMomentum = 0.9f;
+    
     private final float angleFrom;
     private float lastAngle;
     
@@ -40,7 +43,6 @@ public class ServoRevoluteJoint  {
         
         joint.setMaxMotorTorque(maxTorque);
 
-        setFactor(factor);
 
         this.angleFrom = angleFrom;
         range = angleTo - angleFrom;
@@ -74,18 +76,18 @@ public class ServoRevoluteJoint  {
         }
     }
 
-    public void setFactor(float factor) {
-        this.factor = factor;
-    }   
-    
     public void fire(int step) {
-        // Fade
-        for (int i = 0; i < steps; i++) {
-            stepActivation[i] *= momentum;
-        }
-
         stepActivation[step] += 1.0f;
         
+        
+    }
+    
+    public void tick() {
+        // Fade
+        for (int i = 0; i < steps; i++) {
+            stepActivation[i] *= stepMomentum;
+        }
+
         //A: winner take all        
         float maxValue = 0;
         for (int i = 0; i < steps; i++) {
@@ -95,12 +97,8 @@ public class ServoRevoluteJoint  {
             }
         }
 
-        //B: TODO vector interpolation       
+        //B: TODO vector interpolation       ?
         
-    }
-    
-    public void tick() {
-               
         rotate(best * dt + angleFrom);
         
     }
@@ -108,7 +106,7 @@ public class ServoRevoluteJoint  {
     public void rotate(float newA) {
         //System.out.println("rotating: " + a);
         
-        float a = lastAngle * momentum + newA * (1.0f - momentum);
+        float a = lastAngle * rotationMomentum + newA * (1.0f - rotationMomentum);
         
         float lower = a - wiggle/2.0f;
         float higher = a + wiggle/2.0f;
@@ -127,7 +125,7 @@ public class ServoRevoluteJoint  {
         //System.out.println(factor + " FIRED: " + " "+ a );
         //System.out.println("  "+ joint.getAnchorA() + " " + joint.getAnchorB());        
         
-        lastAngle = newA;
+        lastAngle = a;
     }
     
     public float getRotation() {
@@ -138,8 +136,4 @@ public class ServoRevoluteJoint  {
         this.wiggle = wiggle;
     }
     
-       
-    
-        
-
 }

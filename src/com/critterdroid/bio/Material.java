@@ -12,10 +12,18 @@ import com.badlogic.gdx.graphics.Color;
  */
 public class Material {
  
-    public Color color;
+    public Color fillColor;
+    public Color strokeColor;
+    public int strokeWidth;
 
-    public Material(Color c) {
-        this.color = c;
+    public Material(Color fillColor) {
+        this(fillColor, null, 0);
+    }
+    
+    public Material(Color fillColor, Color strokeColor, int strokeWidth) {
+        this.fillColor = fillColor;
+        this.strokeColor = strokeColor;
+        this.strokeWidth = strokeWidth;
     }
     
 }

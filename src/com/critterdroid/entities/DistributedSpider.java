@@ -102,7 +102,7 @@ public class DistributedSpider extends Critter {
 
         float visionDistance = 250;
     
-        Body center = w.createBall(centerRadius, initialPos.x, initialPos.y, c2, 1.0f);
+        Body center = w.newCircle(centerRadius, initialPos.x, initialPos.y, c2, 1.0f);
 
         cortex = new CritterdingBrain();
 
@@ -125,7 +125,7 @@ public class DistributedSpider extends Critter {
                 float dx = initialPos.x + (float) Math.cos(theta) * x;
                 float dy = initialPos.y + (float) Math.sin(theta) * x;
 
-                Body b = w.createBall(r, dx, dy, s % 2 == 0 ? new Color(c1) : new Color(c2), 1.0f);
+                Body b = w.newCircle(r, dx, dy, s % 2 == 0 ? new Color(c1) : new Color(c2), 1.0f);
 
                 x += r * 2f;
 
@@ -197,7 +197,7 @@ public class DistributedSpider extends Critter {
                     
                     float length = r * rectangleLimbLengthRatio;
                     float width = r * rectangleLimbWidthRatio;
-                    Body rl = w.createRectangle(length, width, rx, ry, theta, c3, rectangleLimbDensity);
+                    Body rl = w.newRectangle(length, width, rx, ry, theta, c3, rectangleLimbDensity);
                     
                     for (float z = 0; z < numRetinasPerSegment; z++) {
 

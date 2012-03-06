@@ -40,7 +40,7 @@ public class SeHSpiderSimulation implements Simulation {
     protected void addCreatures(App sim) {
         
         
-        sim.physicsWorld.setGravity(new Vector2(0, 80.0f));
+        sim.world.setGravity(new Vector2(0, 80.0f));
         //sim.physicsWorld.setGravity(new Vector2(0, 0.0f));
         
         //BrainWiring wiring = new StructuredWiring(3);
@@ -244,7 +244,7 @@ public class SeHSpiderSimulation implements Simulation {
     @Override
     public void init(App app) {
 
-        World physicsWorld = app.physicsWorld;
+        World physicsWorld = app.world;
         
         physicsWorld.setGravity(new Vector2(0, 9.8f));
 
@@ -317,13 +317,13 @@ public class SeHSpiderSimulation implements Simulation {
     
     
     public void addCircleRock(App sim, float x, float y, float r, Color c) {
-        sim.createBall(r, x, y, c, 1.0f);
+        sim.newCircle(r, x, y, c, 1.0f);
     }
     public void addRectRock(App sim, float x, float y, float r, Color c) {
-        sim.createRectangle(r, r*1.6f, x, y, 0, c, 4.0f);
+        sim.newRectangle(r, r*1.6f, x, y, 0, c, 4.0f);
     }
     
     public static void main(String[] args) {
-        App.run(new SeHSpiderSimulation(), "Spiders", 640, 480);
+        App.run(new SeHSpiderSimulation(), "Spiders", 1280, 720);
     }
 }

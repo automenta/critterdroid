@@ -46,18 +46,18 @@ public class ColorBody extends MotorNeuron {
         
         float v;
         
-        if (index == 0) v = material.color.r;
-        else if (index == 1) v = material.color.g;
-        else /*if (index == 2)*/ v = material.color.b;
+        if (index == 0) v = material.fillColor.r;
+        else if (index == 1) v = material.fillColor.g;
+        else /*if (index == 2)*/ v = material.fillColor.b;
         
         if (posOrNeg) v+= delta; else v-= delta;
         
         if (v < 0) v = 0;
         if (v > 1.0f) v = 1.0f;
         
-        if (index == 0) material.color.r = v;
-        else if (index == 1) material.color.g = v;
-        else if (index == 2) material.color.b =v;
+        if (index == 0) material.fillColor.r = v;
+        else if (index == 1) material.fillColor.g = v;
+        else if (index == 2) material.fillColor.b =v;
     }
     
     
