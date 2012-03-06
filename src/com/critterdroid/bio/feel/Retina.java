@@ -31,7 +31,36 @@ public class Retina implements RayCastCallback {
     private float maxDistance;
     private Material material;
 
-    public Retina(final CritterdingBrain brain, Body body, Vector2 offset, float angle, float maxDistance) {
+    public class RetinaSensor extends SenseNeuron {
+        private final int channel;
+        private final float iStart;
+        private final float iStop;
+
+        public RetinaSensor(int channel /* 0=R, 1=G, 2=B */, float iStart, float iStop) {
+            this.channel = channel;
+            this.iStart = iStart;
+            this.iStop = iStop;
+        }
+        
+        @Override public double getOutput() {
+            float v = 0;
+            if (channel == 0)
+                v = c.r;
+            else if (channel == 1)
+                v = c.g;
+            else
+                v = c.b;
+
+            //TODO use "smoother" discretization
+            if ((v >= iStart) && (v < iStop))
+                return 1.0;
+            return 0.0;
+        }
+    
+        
+    }
+    
+    public Retina(final CritterdingBrain brain, Body body, Vector2 offset, float angle, float maxDistance, int levels) {
         super();
 
         this.body = body;
@@ -40,22 +69,14 @@ public class Retina implements RayCastCallback {
         this.angle = angle;
         this.maxDistance = maxDistance;
 
-
-        brain.addInput(new SenseNeuron() {
-            @Override public double getOutput() {
-                return 2.0f * (c.r - 0.5f);
+        float dl = 1.0f / ((float)levels);
+        float l = 0;
+        for (int i = 0; i < levels; i++) {
+            for (int j = 0; j < 3; j++) {
+                brain.addInput(new RetinaSensor(j, l, l + dl));
             }
-        });
-        brain.addInput(new SenseNeuron() {
-            @Override public double getOutput() {
-                return 2.0f * (c.g - 0.5f);
-            }
-        });
-        brain.addInput(new SenseNeuron() {
-            @Override public double getOutput() {
-                return 2.0f * (c.b - 0.5f);
-            }
-        });
+            l += dl;
+        }
 
     }
 

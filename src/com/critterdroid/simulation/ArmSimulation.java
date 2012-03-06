@@ -37,17 +37,19 @@ public class ArmSimulation implements Simulation {
 
     public class RobotArm extends Critter {
 
-        float baseLength = 0.5f;
-        float baseWidth = 0.5f;
+        float baseHeight = 0.3f;
+        float baseWidth = 0.3f;
 
-        int armSegments = 4;
+        int armSegments = 6;
         
-        float armLength = 0.5f;
-        float armWidth = 0.1f;
+        float armLength = 0.65f;
+        float armWidth = 0.40f;
         
-        float servoRange = ((float)Math.PI / 2.0f) * 0.9f;
-        int servoSteps = 6;
-        int numRetinasPerSegment = 32;
+        float servoRange = ((float)Math.PI / 2.0f) * 0.8f;
+        int servoSteps = 3;
+        int numRetinasPerSegment = 16;
+        int orientationSteps = 13;
+        int retinaLevels = 7;
         
         float visionDistance = 10.0f;
         
@@ -56,35 +58,39 @@ public class ArmSimulation implements Simulation {
         private final float ix;
         private final float iy;
         MeshWiring brainMesh;
+        private final Color color;
 
-        public RobotArm(float ix, float iy) {
+        public RobotArm(float ix, float iy, Color c) {
             super();
             this.ix = ix;
             this.iy = iy;
+            this.color = c;
         }
  
         
         @Override
         public void init(App s) {
-            Material m = new Material(Color.GRAY, Color.DARK_GRAY, 2);
+            Material m = new Material(color, Color.DARK_GRAY, 2);
             
-            Body base = s.newRectangle(baseWidth, baseLength, ix, iy, 0, 160.0f, m);
+            Body base = s.newRectangle(baseWidth, baseHeight, ix, iy, 0, 1.0f, m);
 
         
             Body[] arm = new Body[armSegments];
             
             float x = base.getWorldCenter().x;
-            float y = base.getWorldCenter().y - baseLength;
+            float y = base.getWorldCenter().y - baseHeight - (armLength * 0.2f);
             
             Body prev = base;
             
-            y -= armLength*0.3;
             
             for (int i = 0; i < armSegments; i++) {
                 
-                Body b = arm[i] = s.newRectangle(armWidth, armLength, x, y, 0, 1.0f, m);
+                float al = getArmLength(armLength, i, armSegments);
+                float aw = getArmWidth(armWidth, i, armSegments);
                 
-                RevoluteJoint j = s.joinRevolute(arm[i], prev, x, y+armLength/2.0f);
+                Body b = arm[i] = s.newRectangle(aw, al, x, y, 0, 1.0f, m);
+                
+                RevoluteJoint j = s.joinRevolute(arm[i], prev, x, y+al/2.0f);
 
                 new ServoRevoluteJoint(brain, j, -servoRange, servoRange, servoSteps);
                 
@@ -93,7 +99,9 @@ public class ArmSimulation implements Simulation {
 
                 brain.addInput(new VelocityAxis(b, true));
                 brain.addInput(new VelocityAxis(b, false));
-                brain.addInput(new Orientation(b));
+                
+                Orientation.newVector(brain, b, orientationSteps);
+                
                 brain.addInput(new VelocityAngular(b));
 
 
@@ -101,11 +109,11 @@ public class ArmSimulation implements Simulation {
                 for (float z = 0; z < n; z++) {
 
                     float a = z * (float)(Math.PI*2.0 / ((float)n));
-                    retinas.add(new Retina(brain, b, new Vector2(0, 0), a, visionDistance));
+                    retinas.add(new Retina(brain, b, new Vector2(0, 0), a, getVisionDistance(i, armSegments), retinaLevels));
                 }
+                //TODO Retina.newVector(...)
                 
-                
-                y -= armLength*1.3f;
+                y -= al*0.9f;
                 
                 prev = arm[i];
             }
@@ -115,7 +123,7 @@ public class ArmSimulation implements Simulation {
             //brainMesh.wireBrain(brain);
             
             //new RandomWiring(400, 4, 16, 0.25f, 0.1f, 0.9f).wireBrain(brain);
-            new RandomWiring(4096, 4, 16, 0.25f, 0.1f, 0.95f).wireBrain(brain);
+            new RandomWiring(8192, 3, 12, 0.5f, 0.1f, 0.8f).wireBrain(brain);
             
             new BrainReport(brain);
             
@@ -147,6 +155,21 @@ public class ArmSimulation implements Simulation {
         @Override
         public void renderOverlay(Graphics g) {
         }
+
+        private float getVisionDistance(int i, int armSegments) {
+            return visionDistance * ( ((float)(i+1)) / ((float)armSegments) );
+        }
+        
+        private float getArmLength(float armLength, int i, int armSegments) {
+            //return armLength * (1.0f - ( (float)i ) / ((float) armSegments ) * 0.5f);
+            
+            return armLength * (float)Math.pow(0.618, i);   //0.618 = golden ratio
+        }
+
+        private float getArmWidth(float armWidth, int i, int armSegments) {
+            //return armWidth;
+            return armWidth * (float)Math.pow(0.618, i);
+        }
         
     }
     
@@ -160,7 +183,8 @@ public class ArmSimulation implements Simulation {
 
         addWorldBox(app, world, 10f, 7f, 0.2f);
         
-        app.addCritter(new RobotArm(0, 0));
+        app.addCritter(new RobotArm(0, 1, Color.GREEN));
+        app.addCritter(new RobotArm(-1, 1, Color.MAGENTA));
         
         //app.addCritter(new RobotArm(500, 700));
 

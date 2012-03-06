@@ -15,9 +15,9 @@ import jcog.critterding.MotorNeuron;
 public class ServoRevoluteJoint  {
     private final RevoluteJoint joint;
     
-    private float wiggle = 0.01f;
+    private float wiggle = 0.02f;
     
-    final float maxTorque = 10.0f;
+    final float maxTorque = 20.0f;
     
     float dr = 0;
     private final float range;
@@ -25,8 +25,8 @@ public class ServoRevoluteJoint  {
     float stepActivation[];
     private final int steps;
 
-    float stepMomentum = 0.5f;
-    float rotationMomentum = 0.9f;
+    float stepMomentum = 0.9f;
+    float rotationMomentum = 0.7f;
     
     private final float angleFrom;
     private float lastAngle;
@@ -41,7 +41,7 @@ public class ServoRevoluteJoint  {
         joint.enableLimit(true);
         joint.enableMotor(true);
         
-        joint.setMaxMotorTorque(maxTorque);
+        joint.setMaxMotorTorque(maxTorque);        
 
 
         this.angleFrom = angleFrom;

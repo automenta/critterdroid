@@ -653,7 +653,7 @@ public class App implements ApplicationListener, InputProcessor {
     public RevoluteJoint joinRevolute(Body a, Body b, float x, float y) {
         RevoluteJointDef jd = new RevoluteJointDef();
         jd.initialize(a, b, new Vector2(x, y));
-        jd.collideConnected = true;
+        jd.collideConnected = false;
         jd.enableMotor = true;
         jd.enableLimit = true;
         jd.lowerAngle = -0.001f;
