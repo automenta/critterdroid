@@ -51,10 +51,14 @@ public class Retina implements RayCastCallback {
             else
                 v = c.b;
 
-            //TODO use "smoother" discretization
-            if ((v >= iStart) && (v < iStop))
+            if (iStart > v)
+                return 0.0;
+            else if (iStop <= v) {
                 return 1.0;
-            return 0.0;
+            }
+            else  {
+                return (v - iStart) / (iStop - iStart);
+            }
         }
     
         

@@ -5,6 +5,7 @@
 package com.critterdroid.bio.act;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.critterdroid.bio.Material;
 import jcog.critterding.MotorNeuron;
@@ -13,12 +14,16 @@ import jcog.critterding.MotorNeuron;
  *
  * @author seh
  */
-public class TowardsColorBody extends MotorNeuron {
+public class ColorBodyTowards extends MotorNeuron {
     private Material material;
     private final Color color;
     private final float momentum;
 
-    public TowardsColorBody(Fixture b, Color c, float momentum) {
+    public ColorBodyTowards(Body b, Color c, float momentum) {
+        this(b.getFixtureList().get(0), c, momentum);
+    }
+    
+    public ColorBodyTowards(Fixture b, Color c, float momentum) {
         super();
         
         this.momentum = momentum;

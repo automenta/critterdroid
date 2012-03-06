@@ -145,8 +145,6 @@ public class App implements ApplicationListener, InputProcessor {
     //private float rotationSpeed;
     private Stage stage;
     private Skin skin;
-    @Deprecated
-    public Window window;
     
 
     public App(Simulation s) {
@@ -246,10 +244,10 @@ public class App implements ApplicationListener, InputProcessor {
         final Label fpsLabel = new Label("fps:", skin.getStyle(LabelStyle.class), "label");
 
         // window.debug();
-        window = new Window("Brain", skin.getStyle(WindowStyle.class), "window");
-        window.x = window.y = 0;
-        window.defaults().spaceBottom(10);
-        window.row().fill().expandX();
+//        window = new Window("Brain", skin.getStyle(WindowStyle.class), "window");
+//        window.x = window.y = 0;
+//        window.defaults().spaceBottom(10);
+//        window.row().fill().expandX();
         //window.add(button).fill(0f, 0f);
         //window.add(buttonMulti);
 
@@ -266,12 +264,12 @@ public class App implements ApplicationListener, InputProcessor {
         //window.row();
         //window.add(splitPane).fill().expand().colspan(4).maxHeight(200);
         //window.row();
-        window.pack();
+        //window.pack();
 
         stage.addActor(fpsLabel);
 
         // stage.addActor(new Button("Behind Window", skin));
-        stage.addActor(window);
+        //stage.addActor(window);
 
         textfield.setTextFieldListener(new TextFieldListener() {
 
@@ -658,7 +656,7 @@ public class App implements ApplicationListener, InputProcessor {
         jd.enableLimit = true;
         jd.lowerAngle = -0.001f;
         jd.upperAngle = 0.001f;
-
+        
         RevoluteJoint j = (RevoluteJoint) world.createJoint(jd);
         return j;
     }
@@ -864,6 +862,10 @@ public class App implements ApplicationListener, InputProcessor {
 
     public Stage getStage() {
         return stage;
+    }
+
+    void addWindow(Window w) {
+        getStage().addActor(w);
     }
 
 }

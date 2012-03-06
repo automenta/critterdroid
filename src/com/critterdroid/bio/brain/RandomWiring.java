@@ -27,9 +27,9 @@ public class RandomWiring implements BrainWiring {
     private final int maxSynapses;
     private final double percentChanceMotorNeuron;
     private final double percentChanceSensorySynapse;
-    double defaultPotentialDecay = 0.95;
+    double defaultPotentialDecay = 0;
     
-    public RandomWiring(int numNeurons, int minSynapses, int maxSynapses, double percentChanceSensorySynapse, double percentChanceMotorNeuron, double potentialDecay) {
+    public RandomWiring(int numNeurons, int minSynapses, int maxSynapses, double percentChanceSensorySynapse, double percentChanceMotorNeuron) {
         this.numNeurons = numNeurons;
         this.minSynapses = minSynapses;
         this.maxSynapses = maxSynapses;

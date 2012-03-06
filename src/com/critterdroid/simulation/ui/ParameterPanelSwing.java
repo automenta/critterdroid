@@ -24,7 +24,7 @@ import javax.swing.event.ChangeListener;
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
     }
 
-    public void addSlider(String label, double min, double max, double def, final SeHSpiderSimulation.SliderListener sliderListener, final String unit) {
+    public void addSlider(String label, double min, double max, double def, final SliderListener sliderListener, final String unit) {
         final double scale = 1000;
         BoundedRangeModel brm = new DefaultBoundedRangeModel((int) (def * scale), 1, (int) (min * scale), (int) (max * scale));
         final JSlider slider = new JSlider(brm);

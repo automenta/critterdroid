@@ -31,7 +31,7 @@ public class ParameterPanel extends Table {
     }
 
 
-    public void addSlider(String label, float min, float max, float def, final SeHSpiderSimulation.SliderListener sliderListener, final String unit) {
+    public void addSlider(String label, float min, float max, float def, final SliderListener sliderListener, final String unit) {
         final float scale = 1000.0f;
         
         final Slider slider = new Slider(scale * min, scale * max, 1, skin);

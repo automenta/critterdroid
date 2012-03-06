@@ -4,6 +4,7 @@
  */
 package com.critterdroid.simulation;
 
+import com.critterdroid.simulation.ui.SliderListener;
 import com.critterdroid.entities.Critter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.Vector2;
@@ -32,10 +33,6 @@ import jcog.math.RandomNumber;
  * @author seh
  */
 public class SeHSpiderSimulation implements Simulation {
-    
-    public interface SliderListener {
-        public void onChanged(double v);
-    }
     
     protected void addCreatures(App sim) {
         
