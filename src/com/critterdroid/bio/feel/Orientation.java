@@ -39,12 +39,25 @@ public class Orientation extends SenseNeuron {
 
     @Override
     public double getOutput() {
-        final double a = body.getAngle();
-        if ((a >= radStart) && (a < radEnd)) {
+        final double v = body.getAngle();
+        if (radStart > v)
+            return 0.0;
+        else if (radEnd <= v) {
             return 1.0;
         }
-        return 0;
+        else  {
+            return (v - radStart) / (radEnd - radStart);
+        }
     }
+    
+//    @Override
+//    public double getOutput() {
+//        final double a = body.getAngle();
+//        if ((a >= radStart) && (a < radEnd)) {
+//            return 1.0;
+//        }
+//        return 0;
+//    }
     
     
     

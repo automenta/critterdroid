@@ -53,7 +53,7 @@ public class SpiderSim implements Simulation {
         float servoRange = ((float)Math.PI / 2.0f) * 0.8f;
         int servoSteps = 7;
         
-        int numRetinasPerSegment = 24;
+        int numRetinasPerSegment = 18;
         int retinaLevels = 4;
 
         int orientationSteps = 9;
@@ -202,7 +202,7 @@ public class SpiderSim implements Simulation {
 
         public ParameterPanel newParameterPanel() {
             ParameterPanel sp = new ParameterPanel(sim.getSkin(), 300, 400);
-            sp.addSlider("Amphetamine", 0, 3.5f, 0.95f, new SliderListener() {
+            sp.addSlider("Memory Decay", 0, 3.5f, 0.95f, new SliderListener() {
 
                 @Override
                 public void onChanged(float v) {
@@ -268,7 +268,7 @@ public class SpiderSim implements Simulation {
 
         ParameterPanel sp = s.newParameterPanel();
         
-        Window w = new Window("Critter Parameters", sim.getSkin());
+        Window w = new Window("Brain Parameters", sim.getSkin());
         w.defaults().spaceBottom(10);
         w.row().fill().expandX();
         w.add(sp);
@@ -290,12 +290,21 @@ public class SpiderSim implements Simulation {
         addWorldBox(app, world, 16f, 7f, 0.1f);
         
         Spider r;
-        app.addCritter(r = new Spider(3, 9, 0.8f, 0, 0, new Color(0.3f, 1f, 0f, 0.8f), new RandomWiring(8192, 3, 8, 0.5f, 0.1f)));
+        app.addCritter(r = new Spider(3, 9, 0.8f, 0, 0, new Color(0.5f, 1f, 0.1f, 0.8f), new RandomWiring(10000, 2, 12, 0.5f, 0.1f)));
         addControls(r);
 
+//        Spider snake = new Spider(1, 12, 0.9f, -4, -1, new Color(0.1f, 0.6f, 0.7f, 0.8f), new RandomWiring(2048, 1, 4, 0.5f, 0.2f));
+//        snake.armLength /= 2f;
+//        snake.armWidth /= 2f;
+//        snake.torsoRadius /= 2f;
+//        snake.retinaLevels = 2;
+//        snake.numRetinasPerSegment = 7;
+//        snake.orientationSteps = 6;
+//        app.addCritter(snake);
+        
         for (int i = 0; i < 8; i++) {
-            Material m = new Material(Color.ORANGE, new Color(1.0f, 0.9f, 0, 0.5f), 5);
-            addCircleRock(app, 2f, -2f+i*0.3f, 0.1f + ((float)Math.random()) * 0.2f, m);
+            Material m = new Material(Color.ORANGE, new Color(1.0f, 0.9f, 0, 0.5f), 3);
+            addCircleRock(app, 2f, -2f+i*0.3f, 0.1f + ((float)Math.random()) * 0.15f, m);
         }
 
         
