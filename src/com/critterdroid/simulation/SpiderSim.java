@@ -4,6 +4,7 @@
  */
 package com.critterdroid.simulation;
 
+import com.critterdroid.bio.feel.QuantizedScalarInput;
 import com.critterdroid.simulation.ui.SliderListener;
 import com.badlogic.gdx.Graphics;
 import com.badlogic.gdx.graphics.Color;
@@ -22,7 +23,6 @@ import com.critterdroid.bio.act.ColorBodyTowards;
 import com.critterdroid.bio.brain.RandomWiring;
 import com.critterdroid.bio.feel.Orientation;
 import com.critterdroid.bio.feel.Retina;
-import com.critterdroid.bio.feel.RevoluteJointAngle;
 import com.critterdroid.bio.feel.VelocityAngular;
 import com.critterdroid.bio.feel.VelocityAxis;
 import com.critterdroid.entities.Critter;
@@ -33,6 +33,7 @@ import java.util.List;
 import jcog.critterding.BrainReport;
 import jcog.critterding.CritterdingBrain;
 import jcog.critterding.InterNeuron;
+import jcog.critterding.SenseNeuron;
 
 /**
  *
@@ -45,15 +46,15 @@ public class SpiderSim implements Simulation {
 
         int arms;
         float armLength = 0.65f;
-        float armWidth = 0.40f;
+        float armWidth = 0.30f;
         int armSegments;
 
         float torsoRadius = 0.4f;
         
-        float servoRange = ((float)Math.PI / 2.0f) * 0.8f;
-        int servoSteps = 7;
+        float servoRange = ((float)Math.PI / 2.0f) * 0.9f;
+        int servoSteps = 5;
         
-        int numRetinasPerSegment = 18;
+        int numRetinasPerSegment = 32;
         int retinaLevels = 4;
 
         int orientationSteps = 9;
@@ -83,7 +84,6 @@ public class SpiderSim implements Simulation {
             m = new Material(color, Color.DARK_GRAY, 2);
         }
  
-        
         public void addArm(Body base, float x, float y, float angle, int armSegments, float armLength, float armWidth) {
             Body[] arm = new Body[armSegments];
                         
@@ -98,18 +98,42 @@ public class SpiderSim implements Simulation {
                                 
                 float ax = (float)(x + Math.cos(angle) * dr);
                 float ay = (float)(y + Math.sin(angle) * dr);
-                Body b = arm[i] = sim.newRectangle(al, aw, ax, ay, angle, 1.0f, m);
+                final Body b = arm[i] = sim.newRectangle(al, aw, ax, ay, angle, 1.0f, m);
                 
                 float rx = (float)(x + Math.cos(angle) * (dr-al/2.0f));
                 float ry = (float)(y + Math.sin(angle) * (dr-al/2.0f));
-                RevoluteJoint j = sim.joinRevolute(arm[i], prev, rx, ry);
+                final RevoluteJoint j = sim.joinRevolute(arm[i], prev, rx, ry);
 
                 new ServoRevoluteJoint(brain, j, -servoRange, servoRange, servoSteps);
-                
-                brain.addInput(new RevoluteJointAngle(j));
 
-                brain.addInput(new VelocityAxis(b, true));
-                brain.addInput(new VelocityAxis(b, false));
+                new QuantizedScalarInput(brain, 4) {
+                    @Override public float getValue() {
+                        return j.getJointAngle()/(float)(Math.PI*2.0f);
+                    }  
+                };
+                final int velocityLevels = 8;
+                new QuantizedScalarInput(brain, velocityLevels) {
+                    @Override public float getValue() {
+                        final float zl = b.getLinearVelocity().len2();
+                        if (zl == 0) return 0;
+                        float xx = b.getLinearVelocity().x;
+                        xx*=xx;
+                        return xx/zl;
+                    }  
+                };
+                new QuantizedScalarInput(brain, velocityLevels) {
+                    @Override public float getValue() {
+                        final float zl = b.getLinearVelocity().len2();
+                        if (zl == 0) return 0;
+                        float yy = b.getLinearVelocity().y;
+                        yy*=yy;
+                        return yy/zl;
+                    }  
+                };
+                        
+                //brain.addInput(new RevoluteJointAngle(j));                
+//                brain.addInput(new VelocityAxis(b, true));                
+//                brain.addInput(new VelocityAxis(b, false));
                 
                 Orientation.newVector(brain, b, orientationSteps);
                 
@@ -290,7 +314,8 @@ public class SpiderSim implements Simulation {
         addWorldBox(app, world, 16f, 7f, 0.1f);
         
         Spider r;
-        app.addCritter(r = new Spider(3, 9, 0.8f, 0, 0, new Color(0.5f, 1f, 0.1f, 0.8f), new RandomWiring(10000, 2, 12, 0.5f, 0.1f)));
+        //app.addCritter(r = new Spider(3, 9, 0.8f, 0, 0, new Color(0.5f, 1f, 0.1f, 0.8f), new RandomWiring(10000, 2, 12, 0.5f, 0.1f)));
+        app.addCritter(r = new Spider(3, 4, 0.618f, 0, 0, new Color(0.2f, 0.75f, 1.0f, 0.8f), new RandomWiring(12000, 4, 12, 0.25f, 0.1f)));
         addControls(r);
 
 //        Spider snake = new Spider(1, 12, 0.9f, -4, -1, new Color(0.1f, 0.6f, 0.7f, 0.8f), new RandomWiring(2048, 1, 4, 0.5f, 0.2f));

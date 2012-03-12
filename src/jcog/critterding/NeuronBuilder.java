@@ -29,7 +29,7 @@ public class NeuronBuilder {
     public final List<SynapseBuilder> synapseBuilders = new LinkedList();
 
     public InterNeuron newNeuron(double potentialDecay) {
-        InterNeuron ni = new InterNeuron(potentialDecay);
+        InterNeuron ni = new InterNeuron(potentialDecay, 1.0f + (1.0f / plasticityStrengthen), 1.0f - (1.0f / plasticityWeaken));
 
         ni.isInhibitory = isInhibitory;
         ni.firingThreshold = firingThreshold;
@@ -37,8 +37,6 @@ public class NeuronBuilder {
         ni.motor = motor;
 
         ni.isPlastic = isPlastic;
-        ni.plasticityStrengthen = 1.0f + (1.0f / plasticityStrengthen);
-        ni.plasticityWeaken = 1.0f - (1.0f / plasticityWeaken);
 
 
         return ni;

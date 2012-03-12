@@ -21,7 +21,7 @@ public class InterNeuron extends MotorNeuron {
     
     //List<SynapseBuilder> synapseBuilders;
 
-    public InterNeuron(double potentialDecay) {
+    public InterNeuron(double potentialDecay, double plasticityStrengthen, double plasticityWeaken ) {
         super();
         isInhibitory = false;
         potential = 0.0F;
@@ -34,10 +34,8 @@ public class InterNeuron extends MotorNeuron {
         this.maxSynapseWeight = 1.0f;
         
         isPlastic = true;
-        plasticityStrengthen = 1.1;
-        plasticityWeaken = 0.999;
-// 	plasticityStrengthen		= 1.0f+(1.0f/100.0f);
-// 	plasticityWeaken		= 1.0f-(1.0f/1000.0f);
+        this.plasticityStrengthen = plasticityStrengthen;
+        this.plasticityWeaken = plasticityWeaken;
         
         motor = null;
     }
