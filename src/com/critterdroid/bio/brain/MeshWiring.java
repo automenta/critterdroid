@@ -4,10 +4,7 @@
  */
 package com.critterdroid.bio.brain;
 
-import com.critterdroid.entities.DistributedSpider.BrainWiring;
-import java.util.Collection;
 import jcog.critterding.CritterdingBrain;
-import jcog.critterding.CritterdingSynapse;
 import jcog.critterding.InterNeuron;
 
 /**
@@ -37,7 +34,7 @@ public class MeshWiring implements BrainWiring {
         }
         for (int h = 0; h < height; h++) {
             for (int w = 0; w < width; w++) {
-                mesh[h][w] = new InterNeuron(0.99) {
+//                mesh[h][w] = new InterNeuron(0.99) {
 
 
 //                    @Override
@@ -53,8 +50,8 @@ public class MeshWiring implements BrainWiring {
 //                     }
 
                     
-                };
-                b.addNeuron(mesh[h][w]);
+//                };
+//                b.addNeuron(mesh[h][w]);
             }
         }
         for (int j = 0; j < width/2; j++)

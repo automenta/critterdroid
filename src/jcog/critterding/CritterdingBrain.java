@@ -5,6 +5,7 @@
 package jcog.critterding;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -15,11 +16,15 @@ import jcog.math.RandomNumber;
  * java port of critterding's BRAINZ system
  */
 public class CritterdingBrain /*extends AbstractLocalBrain<SenseNeuron, MotorNeuron, CritterdingNeuron, SimpleSynapse<CritterdingNeuron>>*/ {
-    public final Map<CritterdingNeuron, List<CritterdingSynapse>> neuronSynapses = new HashMap();
+    public final Map<CritterdingNeuron, CritterdingSynapse[]> neuronSynapses = new HashMap();
     public final List<CritterdingSynapse> synapses = new LinkedList();
     final List<SenseNeuron> sense = new ArrayList();
     final List<MotorNeuron> motor = new ArrayList();
     final List<InterNeuron> neuron = new ArrayList();
+    
+    private transient InterNeuron[] neuronArray = null;
+    private transient CritterdingSynapse[] synapseArray = null;
+    
     double percentChanceInhibitoryNeuron;      // percent chance that when adding a new random neuron, it's inhibitory
     double percentChanceConsistentSynapses;    // synaptic consistancy, meaning all synapses of a neuron will be OR I OR E:  if set to 0, neurons will have mixed I and E synapses
     double percentChanceInhibitorySynapses;    //    // percent chance that when adding a new random neuron, it has inhibitory synapses
@@ -95,7 +100,7 @@ public class CritterdingBrain /*extends AbstractLocalBrain<SenseNeuron, MotorNeu
         }
     }
 
-    public List<CritterdingSynapse> getIncomingSynapses(final InterNeuron n) {
+    public CritterdingSynapse[] getIncomingSynapses(final InterNeuron n) {
         return neuronSynapses.get(n);
     }
 
@@ -104,7 +109,18 @@ public class CritterdingBrain /*extends AbstractLocalBrain<SenseNeuron, MotorNeu
         neuronsFired = 0;
         motorNeuronsFired = 0;
 
-        for (final InterNeuron n : neuron) {
+        if (synapseArray == null) {            
+            synapseArray = synapses.toArray(new CritterdingSynapse[synapses.size()]);
+        }
+        if (neuronArray ==null) {
+            neuronArray = neuron.toArray(new InterNeuron[neuron.size()]);
+        }
+        
+        for (final CritterdingSynapse s : synapseArray) {
+            s.invalid = true;
+        }
+
+        for (final InterNeuron n : neuronArray) {
             n.forward(getIncomingSynapses(n));
 
             boolean fired = n.nextOutput!=0;
@@ -126,7 +142,7 @@ public class CritterdingBrain /*extends AbstractLocalBrain<SenseNeuron, MotorNeu
         }
 
         // commit outputs at the end
-        for (final InterNeuron in : neuron) {
+        for (final InterNeuron in : neuronArray) {
             in.output = in.nextOutput;
         }
 
@@ -297,25 +313,33 @@ public class CritterdingBrain /*extends AbstractLocalBrain<SenseNeuron, MotorNeu
     }
 
     public void removeSynapse(CritterdingSynapse s) {
-        if (synapses.remove(s)) {
-            List<CritterdingSynapse> incoming = neuronSynapses.get(s.target);
-            if (!incoming.remove(s)) {
-                System.err.println("Error removing " + s);
-            }
-        }
+        System.err.println("remove synapse not implemented yet");
+//        if (synapses.remove(s)) {
+//            List<CritterdingSynapse> incoming = neuronSynapses.get(s.target);
+//            if (!incoming.remove(s)) {
+//                System.err.println("Error removing " + s);
+//            }
+//        }
+        synapseArray = null;
     }
     
     public CritterdingSynapse newSynapse(CritterdingNeuron from, CritterdingNeuron to, double weight) {
         final CritterdingSynapse s = new CritterdingSynapse(from, to, weight);
         synapses.add(s);
 
-        List<CritterdingSynapse> incoming = neuronSynapses.get(to);
+        CritterdingSynapse[] incoming = neuronSynapses.get(to);
         if (incoming == null) {
-            incoming = new ArrayList();
+            incoming = new CritterdingSynapse[] { s };
             neuronSynapses.put(to, incoming);
         }
-        incoming.add(s);
+        else {
+            incoming = Arrays.copyOf(incoming, incoming.length+1);
+            incoming[incoming.length-1] = s;
+            neuronSynapses.put(to, incoming);
+        }
 
+        synapseArray = null;
+        
         return s;
     }
 
@@ -406,10 +430,12 @@ public class CritterdingBrain /*extends AbstractLocalBrain<SenseNeuron, MotorNeu
 
     public void addNeuron(InterNeuron n) {
         neuron.add(n);
+        neuronArray = null;
     }
     public void removeNeuron(InterNeuron n) {
         neuron.remove(n);
         this.neuronSynapses.remove(n);
+        neuronArray = null;
     }
 
     public int getMotorNeuronsFired(boolean reset) {        
@@ -434,9 +460,9 @@ public class CritterdingBrain /*extends AbstractLocalBrain<SenseNeuron, MotorNeu
     public void removeDisconnectedNeurons() {
         final List<InterNeuron> rem = new LinkedList();
         for (final InterNeuron i : neuron) {
-            final List<CritterdingSynapse> ll = getIncomingSynapses(i);
+            final CritterdingSynapse[] ll = getIncomingSynapses(i);
             if (ll != null)
-                if (ll.size() > 0)
+                if (ll.length > 0)
                     continue;
             rem.add(i);
         }

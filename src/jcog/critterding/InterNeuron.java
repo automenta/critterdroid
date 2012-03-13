@@ -1,9 +1,5 @@
 package jcog.critterding;
 
-import java.util.Collection;
-import java.util.List;
-import jcog.critterding.CritterdingSynapse;
-
 public class InterNeuron extends MotorNeuron {
 
     double output, nextOutput;
@@ -40,7 +36,7 @@ public class InterNeuron extends MotorNeuron {
         motor = null;
     }
 
-    public void forward(final Collection<CritterdingSynapse> synapses) {        
+    public void forward(final CritterdingSynapse[] synapses) {        
 
         // potential decay
         potential *= potentialDecay;
@@ -74,7 +70,7 @@ public class InterNeuron extends MotorNeuron {
         
     }
 
-    protected void forwardInhibitory(final Collection<CritterdingSynapse> synapses) {
+    protected void forwardInhibitory(final CritterdingSynapse[] synapses) {
         // do we spike/fire
         if (potential <= -1.0f * firingThreshold) {
             // reset neural potential
@@ -86,7 +82,7 @@ public class InterNeuron extends MotorNeuron {
             // PLASTICITY: if neuron & synapse fire together, the synapse strenghtens
             if (isPlastic) {
                 for (final CritterdingSynapse s : synapses) {
-                    final double o = s.getInput();
+                    final double o = s.curInput; //s.getInput(); //input will be cached by here
                     // if synapse fired, strenghten the weight
                     final double w = s.weight;
                     if ((o < 0.0f && w > 0.0f) || (o > 0.0f && w < 0.0f)) {
@@ -109,7 +105,7 @@ public class InterNeuron extends MotorNeuron {
         }
     }
 
-    protected void forwardExhibitory(final Collection<CritterdingSynapse> synapses) {
+    protected void forwardExhibitory(final CritterdingSynapse[] synapses) {
         // do we spike/fire
         if (potential >= firingThreshold) {
             // reset neural potential
@@ -121,7 +117,7 @@ public class InterNeuron extends MotorNeuron {
             // PLASTICITY: if neuron & synapse fire together, the synapse strenghtens
             if (isPlastic) {
                 for (final CritterdingSynapse s : synapses) {
-                    final double o = s.getInput();
+                    final double o = s.curInput; //s.getInput(); //input will be cached by here
 
                     final double w = s.weight;
 

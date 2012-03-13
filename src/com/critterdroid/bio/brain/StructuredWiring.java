@@ -4,11 +4,7 @@
  */
 package com.critterdroid.bio.brain;
 
-import com.critterdroid.entities.DistributedSpider.BrainWiring;
 import jcog.critterding.CritterdingBrain;
-import jcog.critterding.InterNeuron;
-import jcog.critterding.NeuronBuilder;
-import jcog.critterding.SenseNeuron;
 
 /**
  *

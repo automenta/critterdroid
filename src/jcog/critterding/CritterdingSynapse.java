@@ -12,15 +12,25 @@ public class CritterdingSynapse {
     public final CritterdingNeuron source;
     public final CritterdingNeuron target;
     public double weight;
-
+    public double curInput;
+    public boolean invalid = true;
+    
     public CritterdingSynapse(CritterdingNeuron source, CritterdingNeuron target, double weight) {
         this.source = source;
         this.target = target;
         this.weight = weight;
     }
 
+//    public void invalidate() {
+//        this.dirty = true;
+//    }
+    
     public final double getInput() {
-        return source.getOutput();
+        if (invalid) {
+            curInput = source.getOutput();
+            invalid = false;
+        }
+        return curInput;
     }
     
 }

@@ -15,9 +15,9 @@ import jcog.critterding.MotorNeuron;
 public class ServoRevoluteJoint  {
     private final RevoluteJoint joint;
     
-    private float wiggle = 0.02f;
+    private float wiggle = 0.01f;
     
-    final float maxTorque = 20.0f;
+    final float maxTorque = 30.0f;
     
     float dr = 0;
     private final float range;

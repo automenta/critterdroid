@@ -9,9 +9,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Slider;
 import com.badlogic.gdx.scenes.scene2d.ui.Slider.ValueChangedListener;
 import com.badlogic.gdx.scenes.scene2d.ui.tablelayout.Table;
-import com.critterdroid.simulation.SeHSpiderSimulation;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 /**
  *

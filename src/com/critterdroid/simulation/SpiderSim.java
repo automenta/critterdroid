@@ -20,20 +20,18 @@ import com.critterdroid.bio.Material;
 import com.critterdroid.bio.Simulation;
 import com.critterdroid.bio.act.ServoRevoluteJoint;
 import com.critterdroid.bio.act.ColorBodyTowards;
+import com.critterdroid.bio.brain.BrainWiring;
 import com.critterdroid.bio.brain.RandomWiring;
 import com.critterdroid.bio.feel.Orientation;
 import com.critterdroid.bio.feel.Retina;
 import com.critterdroid.bio.feel.VelocityAngular;
-import com.critterdroid.bio.feel.VelocityAxis;
 import com.critterdroid.entities.Critter;
-import com.critterdroid.entities.DistributedSpider.BrainWiring;
 import com.critterdroid.simulation.ui.ParameterPanel;
 import java.util.LinkedList;
 import java.util.List;
 import jcog.critterding.BrainReport;
 import jcog.critterding.CritterdingBrain;
 import jcog.critterding.InterNeuron;
-import jcog.critterding.SenseNeuron;
 
 /**
  *
@@ -52,10 +50,12 @@ public class SpiderSim implements Simulation {
         float torsoRadius = 0.4f;
         
         float servoRange = ((float)Math.PI / 2.0f) * 0.9f;
-        int servoSteps = 5;
+        int servoSteps = 7;
         
-        int numRetinasPerSegment = 32;
+        int numRetinasPerSegment = 24;
         int retinaLevels = 4;
+        
+        final int velocityLevels = 16;
 
         int orientationSteps = 9;
         
@@ -111,7 +111,6 @@ public class SpiderSim implements Simulation {
                         return j.getJointAngle()/(float)(Math.PI*2.0f);
                     }  
                 };
-                final int velocityLevels = 8;
                 new QuantizedScalarInput(brain, velocityLevels) {
                     @Override public float getValue() {
                         final float zl = b.getLinearVelocity().len2();
@@ -131,13 +130,23 @@ public class SpiderSim implements Simulation {
                     }  
                 };
                         
+                new QuantizedScalarInput(brain, orientationSteps) {
+                    @Override public float getValue() {
+                        return b.getAngle() / (float)(2.0 * Math.PI);
+                    }                    
+                };
+                new QuantizedScalarInput(brain, velocityLevels) {
+                    @Override public float getValue() {
+                        return b.getAngularVelocity() / (float)(2.0 * Math.PI);
+                    }                    
+                };
+                
+                //DEPRECATED
                 //brain.addInput(new RevoluteJointAngle(j));                
-//                brain.addInput(new VelocityAxis(b, true));                
-//                brain.addInput(new VelocityAxis(b, false));
-                
-                Orientation.newVector(brain, b, orientationSteps);
-                
-                brain.addInput(new VelocityAngular(b));
+                //brain.addInput(new VelocityAxis(b, true));                
+                //brain.addInput(new VelocityAxis(b, false));                
+                //Orientation.newVector(brain, b, orientationSteps);                
+                //brain.addInput(new VelocityAngular(b));
 
                 brain.addOutput(new ColorBodyTowards(b, color, 0.95f));
                 brain.addOutput(new ColorBodyTowards(b, new Color(color.r * 0.5f, color.g * 0.5f, color.b * 0.5f, color.a * 0.25f), 0.95f));
@@ -315,7 +324,7 @@ public class SpiderSim implements Simulation {
         
         Spider r;
         //app.addCritter(r = new Spider(3, 9, 0.8f, 0, 0, new Color(0.5f, 1f, 0.1f, 0.8f), new RandomWiring(10000, 2, 12, 0.5f, 0.1f)));
-        app.addCritter(r = new Spider(3, 4, 0.618f, 0, 0, new Color(0.2f, 0.75f, 1.0f, 0.8f), new RandomWiring(12000, 4, 12, 0.25f, 0.1f)));
+        app.addCritter(r = new Spider(2, 6, 0.8f, 0, 0, new Color(0.2f, 0.75f, 1.0f, 0.8f), new RandomWiring(12000, 6, 8, 0.25f, 0.1f)));
         addControls(r);
 
 //        Spider snake = new Spider(1, 12, 0.9f, -4, -1, new Color(0.1f, 0.6f, 0.7f, 0.8f), new RandomWiring(2048, 1, 4, 0.5f, 0.2f));

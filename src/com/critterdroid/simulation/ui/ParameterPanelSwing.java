@@ -4,7 +4,6 @@
  */
 package com.critterdroid.simulation.ui;
 
-import com.critterdroid.simulation.SeHSpiderSimulation;
 import javax.swing.BoundedRangeModel;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultBoundedRangeModel;
@@ -39,7 +38,7 @@ import javax.swing.event.ChangeListener;
             @Override
             public void stateChanged(ChangeEvent e) {
                 double v = ((double) slider.getValue()) / scale;
-                sliderListener.onChanged(v);
+                //sliderListener.onChanged(v);
                 unitLabel.setText(v + " " + unit);
             }
         };

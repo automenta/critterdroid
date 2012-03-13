@@ -4,10 +4,8 @@
  */
 package com.critterdroid.bio.brain;
 
-import com.critterdroid.entities.DistributedSpider.BrainWiring;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import jcog.critterding.CritterdingBrain;
