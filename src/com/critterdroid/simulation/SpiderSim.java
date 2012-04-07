@@ -324,7 +324,7 @@ public class SpiderSim implements Simulation {
         
         Spider r;
         //app.addCritter(r = new Spider(3, 9, 0.8f, 0, 0, new Color(0.5f, 1f, 0.1f, 0.8f), new RandomWiring(10000, 2, 12, 0.5f, 0.1f)));
-        app.addCritter(r = new Spider(2, 6, 0.8f, 0, 0, new Color(0.2f, 0.75f, 1.0f, 0.8f), new RandomWiring(12000, 6, 8, 0.25f, 0.1f)));
+        app.addCritter(r = new Spider(2, 6, 0.8f, 0, 0, new Color(0.4f, 0.9f, 1.0f, 0.8f), new RandomWiring(45000, 4, 12, 0.25f, 0.1f)));
         addControls(r);
 
 //        Spider snake = new Spider(1, 12, 0.9f, -4, -1, new Color(0.1f, 0.6f, 0.7f, 0.8f), new RandomWiring(2048, 1, 4, 0.5f, 0.2f));

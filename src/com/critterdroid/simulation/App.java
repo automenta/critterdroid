@@ -118,6 +118,7 @@ public class App implements ApplicationListener, InputProcessor {
         config.vSyncEnabled = true;
         config.samples = 1;
         
+        
         new LwjglApplication(new App(s), config);
         
     }
@@ -414,13 +415,13 @@ public class App implements ApplicationListener, InputProcessor {
         Gdx.gl11.glLineWidth(w);        
     }
     static float[] lineVertices = new float[6];
-    static Mesh lineMesh = new Mesh(true, 4, 6, new VertexAttribute(VertexAttributes.Usage.Position, 3, "attr_Position"));
-
-    static {
-        lineMesh.setIndices(new short[]{0, 1});
-    }
+    static Mesh lineMesh = null; 
 
     public static final void drawLine(final float x1, final float y1, final float x2, final float y2) {
+        if (lineMesh == null) {
+            lineMesh = new Mesh(true, 4, 6, new VertexAttribute(VertexAttributes.Usage.Position, 3, "attr_Position"));
+            lineMesh.setIndices(new short[]{0, 1});
+        }
         //lineMesh.setVertices(new float[] { x1, y1, 0, x2,y2, 0                });
         lineVertices[0] = x1;
         lineVertices[1] = getHeight() - y1;
