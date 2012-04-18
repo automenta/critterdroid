@@ -13,6 +13,11 @@ import com.badlogic.gdx.graphics.Mesh;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.VertexAttribute;
 import com.badlogic.gdx.graphics.VertexAttributes;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
@@ -55,13 +60,14 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField.TextFieldListener;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField.TextFieldStyle;
 import com.badlogic.gdx.scenes.scene2d.ui.Window;
-import com.badlogic.gdx.scenes.scene2d.ui.Window.WindowStyle;
 import com.critterdroid.bio.Material;
+import com.critterdroid.bio.Material.Text;
 import com.critterdroid.bio.Simulation;
 import com.critterdroid.entities.Critter;
 import java.nio.FloatBuffer;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
@@ -197,6 +203,12 @@ public class App implements ApplicationListener, InputProcessor {
 //            groundPoly.dispose();
 //        }
 
+                fontSpriteBatch = new SpriteBatch();
+                atlas = new TextureAtlas();
+                font = new BitmapFont(Gdx.files.local("assets/ui/default.fnt"), atlas.findRegion("verdana39"), false);
+                renderer = new ShapeRenderer();
+                renderer.setProjectionMatrix(fontSpriteBatch.getProjectionMatrix());
+        
         createUI();
 
         sim.init(this);
@@ -378,6 +390,10 @@ public class App implements ApplicationListener, InputProcessor {
 
     @Override
     public void dispose() {
+              fontSpriteBatch.dispose();
+                renderer.dispose();
+                font.dispose();
+                atlas.dispose();            
     }
 
     @Override
@@ -544,6 +560,11 @@ public class App implements ApplicationListener, InputProcessor {
     
     public final static Color gray = new Color(0.5f, 0.5f, 0.5f, 0.5f);
 
+        private SpriteBatch fontSpriteBatch;
+        private TextureAtlas atlas;
+        private BitmapFont font;
+        private ShapeRenderer renderer;
+    
     private void renderBody(final Graphics g, final Body body/*
              * , float halfWidth, float halfHeight
              */) {
@@ -556,9 +577,10 @@ public class App implements ApplicationListener, InputProcessor {
             Color fillColor = null;
             Color strokeColor = null;
             int strokeWidth = 0;
+            Material m = null;
             
             if (ud instanceof Material) {
-                final Material m = (Material) ud;
+                m = (Material) ud;
                 fillColor = m.fillColor;
                 strokeColor = m.strokeColor;
                 strokeWidth = m.strokeWidth;
@@ -591,15 +613,74 @@ public class App implements ApplicationListener, InputProcessor {
                 if ((strokeColor!=null) && (strokeWidth > 0)) {
                     setColor(strokeColor);
                     setLineWidth(strokeWidth);
-                    drawPolygon(center.x, center.y, ps, angle, false);                    
+                    drawPolygon(center.x, center.y, ps, angle, false);  
+                    
                 }
                 
             } else {
                 //System.out.println("unrendered: " + s);
             }
+            if (m!=null)
+                if (m.texts!=null)
+                    drawText(center.x, center.y, angle, m.texts);
         }
     }
 
+    public void drawText(float cx, float cy, float angle, List<Text> texts) {
+            Gdx.gl10.glPushMatrix();
+                final int viewHeight = Gdx.graphics.getHeight();
+        for (Text t : texts) {
+            
+             // red.a = (red.a + Gdx.graphics.getDeltaTime() * 0.1f) % 1;
+
+
+                
+                //Gdx.gl.glClearColor(1, 1, 1, 1);
+                //Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
+                fontSpriteBatch.begin();
+                fontSpriteBatch.setProjectionMatrix(cam.projection);
+                
+                Matrix4 m = new Matrix4();                
+//                m.translate(cx-cam.position.x, -cy, 0);
+                System.out.println(cy + " " + cam.position.y);
+                m.translate(cx-cam.position.x, -cy+(viewHeight - cam.position.y), 0);
+                m.scale(0.1f,0.1f, 1f);
+                m.rotate(0, 0, 1, (float)(angle*180.0/Math.PI));
+                fontSpriteBatch.setTransformMatrix(m);
+
+                font.setColor(Color.WHITE);
+
+                float alignmentWidth;
+
+//                if (false) {
+//                        alignmentWidth = 0;
+//                        font.drawMultiLine(spriteBatch, text, x, viewHeight - y, alignmentWidth, HAlignment.RIGHT);
+//                }
+//
+//                if (false) {
+//                        TextBounds bounds = font.getMultiLineBounds(text);
+//                        alignmentWidth = bounds.width;
+//                        font.drawMultiLine(spriteBatch, text, x, viewHeight - y, alignmentWidth, HAlignment.RIGHT);
+//                }
+
+                if (true) {
+                        alignmentWidth = 280;
+                        // font.drawMultiLine(spriteBatch, text, x, viewHeight - y, alignmentWidth, HAlignment.RIGHT);
+                        font.drawWrapped(fontSpriteBatch, t.text, 0, 0, alignmentWidth, BitmapFont.HAlignment.LEFT);
+                        
+                }
+
+                
+                fontSpriteBatch.end();
+        }
+            Gdx.gl10.glPopMatrix();
+        
+//                renderer.begin(ShapeType.Rectangle);
+//                renderer.rect(x, viewHeight - y, x + alignmentWidth, 300);
+//                renderer.end();
+        
+    }
+    
     private Body initBody(BodyDef b, Shape shape, float x, float y, float density, float friction, Color c) {
         return initBody(b, shape, x, y, density, friction, new Material(c));
     }
