@@ -144,7 +144,7 @@ public class App implements ApplicationListener, InputProcessor {
 //        //new LwjglApplication(new App(new ArmSimulation()), config);
 //    }
     
-    float targetZoom, targetAngle = 0;
+    float targetZoom, currentAngle=0,targetAngle = 0;
     Vector3 camPos;
     private OrthographicCamera cam;
     //private Texture texture;
@@ -691,7 +691,7 @@ public class App implements ApplicationListener, InputProcessor {
                         float x = (bounds.width / 2) * t.scale.x - t.position.x / t.scale.x;
                         float y = (bounds.height / 2) * t.scale.y - t.position.y / t.scale.y;
                 
-                m.setToRotation(0, 0, 1, (float)((targetAngle)*180.0/Math.PI) );
+                m.setToRotation(0, 0, 1, (float)((currentAngle)*180.0/Math.PI) );
                 m.translate(cx-cam.position.x, -cy+(viewHeight - cam.position.y), 0);
                 m.rotate(0, 0, 1, (float)((-angle)*180.0/Math.PI)  );
                 
@@ -996,7 +996,9 @@ public class App implements ApplicationListener, InputProcessor {
         cam.zoom = cam.zoom * (1.0f - momentum) + (momentum) * targetZoom;
         
         
-        cam.up.set((float)Math.sin(targetAngle), (float)Math.cos(targetAngle), 0);
+        currentAngle = (1.0f - momentum) * currentAngle + (momentum) * targetAngle;
+        
+        cam.up.set((float)Math.sin(currentAngle), (float)Math.cos(currentAngle), 0);
 //		cam.tmpMat.setToRotation(tmpVec.set(0, 0, 1), angle);
 //		cam.direction.mul(tmpMat).nor();
 //		cam.up.mul(tmpMat).nor();
