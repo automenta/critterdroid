@@ -144,7 +144,7 @@ public class App implements ApplicationListener, InputProcessor {
 //        //new LwjglApplication(new App(new ArmSimulation()), config);
 //    }
     
-    float targetZoom;
+    float targetZoom, targetAngle = 0;
     Vector3 camPos;
     private OrthographicCamera cam;
     //private Texture texture;
@@ -181,6 +181,7 @@ public class App implements ApplicationListener, InputProcessor {
         cam.position.set(0, HEIGHT, 0);
 
         targetZoom = cam.zoom = 0.01f;
+        targetAngle = 0;
         camPos = new Vector3(cam.position);
 
         glViewport = new Rectangle(0, 0, WIDTH, HEIGHT);
@@ -589,6 +590,8 @@ public class App implements ApplicationListener, InputProcessor {
                 fillColor = gray;
             }
 
+            float radius = 0;
+            
             final Shape s = f.getShape();
             if (s instanceof CircleShape) {
                 CircleShape cs = (CircleShape) s;
@@ -602,6 +605,8 @@ public class App implements ApplicationListener, InputProcessor {
                     setLineWidth(strokeWidth);
                     drawEllipse(center.x, center.y, cs.getRadius(), cs.getRadius(), numOvalSegments, angle, false);
                 }
+                
+                radius = cs.getRadius();
                 
                 
             } else if (s instanceof PolygonShape) {
@@ -618,19 +623,55 @@ public class App implements ApplicationListener, InputProcessor {
                     
                 }
                 
+                radius = getRadius(ps);
+                
             } else {
                 //System.out.println("unrendered: " + s);
             }
             if (m!=null)
                 if (m.texts!=null)
-                    drawText(center.x, center.y, angle, m.texts);
+                    drawText(center.x, center.y, radius, angle, m.texts);
         }
     }
-               Matrix4 m = new Matrix4();                
  
-    public void drawText(float cx, float cy, float angle, List<Text> texts) {
+    public float getRadius(Shape s) {
+        if (s instanceof CircleShape) {
+            return ((CircleShape)s).getRadius();
+        }
+        else if (s instanceof PolygonShape) {
+            return getRadius((PolygonShape)s);
+        }
+        System.err.println("Unknown radius calcuation: " + s.getClass());
+        return 0;
+    }
+    
+    public float getRadius(PolygonShape ps) {
+        float minX=0, maxX=0;
+        float minY=0, maxY=0;
+        Vector2 v = new Vector2();
+        for (int i = 0; i < ps.getVertexCount(); i++) {
+            ps.getVertex(i, v);
+            if (i == 0) {
+                minX = maxX = v.x;
+                minY = maxY = v.y;
+            }
+            else {
+                if (v.x < minX) minX = v.x;
+                if (v.y < minY) minX = v.y;
+                if (v.x > minX) maxX = v.x;
+                if (v.y > minY) maxX = v.y;
+            }
+                        
+        }
+        return Math.max(Math.abs(minX-maxX), Math.abs(minY-maxY));
+    }
+    
+    Matrix4 m = new Matrix4();                
+ 
+    public void drawText(float cx, float cy, float shapeRadius, float angle, List<Text> texts) {
             Gdx.gl10.glPushMatrix();
                 final int viewHeight = Gdx.graphics.getHeight();
+                
         for (Text t : texts) {
             
              // red.a = (red.a + Gdx.graphics.getDeltaTime() * 0.1f) % 1;
@@ -643,16 +684,18 @@ public class App implements ApplicationListener, InputProcessor {
                 fontSpriteBatch.setProjectionMatrix(cam.projection);
                 
 
+                
                 int alignmentWidth = 280;
                 
                         TextBounds bounds = font.getWrappedBounds(t.text, alignmentWidth);
                         float x = (bounds.width / 2) * t.scale.x - t.position.x / t.scale.x;
                         float y = (bounds.height / 2) * t.scale.y - t.position.y / t.scale.y;
                 
-                m.setToTranslation(cx-cam.position.x, -cy+(viewHeight - cam.position.y), 0);
-//                m.translate(cx-cam.position.x, -cy+(viewHeight - cam.position.y), 0);
-                m.rotate(0, 0, 1, (float)(-angle*180.0/Math.PI) - camRotate);
-                m.scale(t.scale.x/bounds.width,t.scale.y/bounds.height, 1f);
+                m.setToRotation(0, 0, 1, (float)((targetAngle)*180.0/Math.PI) );
+                m.translate(cx-cam.position.x, -cy+(viewHeight - cam.position.y), 0);
+                m.rotate(0, 0, 1, (float)((-angle)*180.0/Math.PI)  );
+                
+                m.scale(t.scale.x/bounds.width*shapeRadius,t.scale.y/bounds.height*shapeRadius, 1f);
                 fontSpriteBatch.setTransformMatrix(m);
 
                 font.setColor(Color.WHITE);
@@ -709,10 +752,10 @@ public class App implements ApplicationListener, InputProcessor {
         return body;
     }
 
-    public Body newRectangle(float w, float h, float x, float y, float angle, float density, Material m) {
+    public Body newRectangle(float w, float h, final float x, final float y, float angle, float density, Material m) {
         PolygonShape s = new PolygonShape();
         s.setAsBox(w / 2.0f, h / 2.0f, new Vector2(0, 0), angle);
-
+        
         //make a bodyDef, and make it dynamic so it actually moves
         BodyDef b = new BodyDef();
         b.type = BodyType.DynamicBody;
@@ -836,6 +879,15 @@ public class App implements ApplicationListener, InputProcessor {
         return false;
     }
 
+    public void updateHitBody() {
+        // translate the mouse coordinates to world coordinates
+
+        // ask the world which bodies are within the given
+        // bounding box around the mouse pointer
+        hitBody = null;
+        world.QueryAABB(callback, testPoint.x - 0.1f, testPoint.y - 0.1f, testPoint.x + 0.1f, testPoint.y + 0.1f);
+    }
+    
     @Override
     public boolean touchDown(int x, int y, int pointer, int button) {
         mouseButtonPressed[button] = true;
@@ -848,20 +900,15 @@ public class App implements ApplicationListener, InputProcessor {
         }
 
         if (button == 0) {
-            // translate the mouse coordinates to world coordinates
-
-            // ask the world which bodies are within the given
-            // bounding box around the mouse pointer
-            hitBody = null;
-            world.QueryAABB(callback, testPoint.x - 0.1f, testPoint.y - 0.1f, testPoint.x + 0.1f, testPoint.y + 0.1f);
-
-
+             updateHitBody();
+            
             // if we hit something we create a new mouse joint
             // and attach it to the hit body.
             if (groundBody == null) {
                 System.err.println(this + " has undefined groundBody.  Unable to create mouseJoint");
             }
             else if (hitBody != null)  {
+                
                 MouseJointDef def = new MouseJointDef();
                 def.bodyA = groundBody;
                 def.bodyB = hitBody;
@@ -890,14 +937,22 @@ public class App implements ApplicationListener, InputProcessor {
                 mouseJoint = null;
             }
         } else if (button == 1) {
-            getScreenToWorld(x, y, target);
-            camPos.set(target.x, getHeight() - target.y, 0);
+            getScreenToWorld(x, y, testPoint);
+            updateHitBody();
+            if (hitBody!=null) {
+                camPos.set(hitBody.getPosition().x, getHeight() - hitBody.getPosition().y, 0);
+                float rad = getRadius(hitBody.getFixtureList().get(0).getShape());
+                targetZoom = (rad/300.0f);
+                targetAngle = hitBody.getAngle();
+            }
+            else {
+                camPos.set(testPoint.x, getHeight() - testPoint.y, 0);
+            }
         }
         return false;
     }
     Vector2 pointerAtDragStart;
     Vector3 posAtDragStart;
-    float camRotate = 0;
 
     @Override
     public boolean touchDragged(int newx, int newy, int pointer) {
@@ -926,9 +981,9 @@ public class App implements ApplicationListener, InputProcessor {
     @Override
     public boolean scrolled(int amount) {
         if (mouseButtonPressed[1]) {
-            float r = 5.0f * amount;
-            camRotate += r;
-            cam.rotate(r, 0, 0, 1f);
+//            float r = 5.0f * amount;
+//            camRotate += r;
+//            cam.rotate(r, 0, 0, 1f);
         } else {
             targetZoom *= 1.0f + ((float) amount) / 10.0f;
         }
@@ -939,6 +994,12 @@ public class App implements ApplicationListener, InputProcessor {
         float momentum = 0.1f;
         cam.position.lerp(camPos, momentum);
         cam.zoom = cam.zoom * (1.0f - momentum) + (momentum) * targetZoom;
+        
+        
+        cam.up.set((float)Math.sin(targetAngle), (float)Math.cos(targetAngle), 0);
+//		cam.tmpMat.setToRotation(tmpVec.set(0, 0, 1), angle);
+//		cam.direction.mul(tmpMat).nor();
+//		cam.up.mul(tmpMat).nor();
     }
 
     public boolean needsGL20() {

@@ -25,31 +25,6 @@ import com.critterdroid.simulation.App;
 public class Spacegraph implements Simulation {
     private App sim;
 
-    public static class TextNode extends Critter {
-
-        public TextNode() {
-            
-        }
-        
-        @Override
-        public void init(App s) {
-        }
-
-        @Override
-        protected void update(double dt) {
-        }
-
-        @Override
-        public void renderUnderlay(Graphics g) {
-        }
-
-        @Override
-        public void renderOverlay(Graphics g) {
-        }    
-        
-        public void dispose() {
-        }
-    }
     
     @Override
     public void init(App app) {
@@ -60,31 +35,13 @@ public class Spacegraph implements Simulation {
         
         world.setGravity(new Vector2(0, 0));
 
-        //app.addCritter(new TextNode());
-        addWorldBox(app, world, 16f, 7f, 0.1f);
+        addWorldBox(app, world, 16f, 12f, 0.1f);
         
-//        Spider r;
-//        //app.addCritter(r = new Spider(3, 9, 0.8f, 0, 0, new Color(0.5f, 1f, 0.1f, 0.8f), new RandomWiring(10000, 2, 12, 0.5f, 0.1f)));
-//        app.addCritter(r = new Spider(2, 6, 0.8f, 0, 0, new Color(0.4f, 0.9f, 1.0f, 0.8f), new RandomWiring(45000, 4, 12, 0.25f, 0.1f)));
-//        addControls(r);
-
-//        Spider snake = new Spider(1, 12, 0.9f, -4, -1, new Color(0.1f, 0.6f, 0.7f, 0.8f), new RandomWiring(2048, 1, 4, 0.5f, 0.2f));
-//        snake.armLength /= 2f;
-//        snake.armWidth /= 2f;
-//        snake.torsoRadius /= 2f;
-//        snake.retinaLevels = 2;
-//        snake.numRetinasPerSegment = 7;
-//        snake.orientationSteps = 6;
-//        app.addCritter(snake);
-        
-        for (int i = 0; i < 2; i++) {
-            Material m = new Material(Color.GRAY, new Color(1.0f, 0.5f, 0, 0.5f), 3);
+        for (int i = 0; i < 4; i++) {
+            Material m = new Material(Color.GRAY.mul(0.95f), new Color(1.0f, 1.0f, 1.0f, 0.5f), 5);
             m.addText(new Text("Text", -6, 1, 1.0f, 1.0f));
-            addCircleRock(app, 2f, -2f+i*0.3f, 0.1f + ((float)Math.random()) * 0.15f, m);
-
             
-            sim.newRectangle(1.9f, 1.4f, 3f, -2f+i*0.3f, 0, 1.0f, m);
-            
+            sim.newRectangle(0.8f+i, 0.4f+i, 3f, -2f+i*0.3f, 0, 1.0f, m);            
         }
 
         
@@ -93,12 +50,8 @@ public class Spacegraph implements Simulation {
     public void addCircleRock(App sim, float x, float y, float r, Material m) {
         sim.newCircle(r, x, y, 1.0f, m);
     }
-//    
-//        public void addRectRock(App sim, float x, float y, float , Material c) {
-//            sim.newRectangle(r, r*1.6f, x, y, 4.0, c);
-//        }
-//    
-    public void addWorldBox(final App app, final World physicsWorld, float w, float h, float wallThick) {
+    
+    public static void addWorldBox(final App app, final World physicsWorld, float w, float h, float wallThick) {
         
         //create walls to keep the balls in bounds:
         PolygonShape verticalWall = new PolygonShape();
@@ -148,32 +101,6 @@ public class Spacegraph implements Simulation {
             topWall.createFixture(horizontalWall, 1);
             topWall.setTransform(new Vector2(0, -h/2), 0);
         }
-        
-//        {
-//            BodyDef wallDef = new BodyDef();
-//            wallDef.type = BodyType.StaticBody;
-//            
-//            //right wall:
-//            Body rightWall = physicsWorld.createBody(wallDef);
-//            rightWall.createFixture(verticalWall, wallThick);
-//            rightWall.setTransform(new Vector2(app.getWidth()-20, app.getHeight()/2.0f), 0);
-//            //rightWall.setTransform(new Vector2(app.getWidth()-50, 0), 0);
-//        }
-        
-
-        
-//        {
-//            BodyDef wallDef = new BodyDef();
-//            wallDef.type = BodyType.StaticBody;
-//
-//            //ceiling:
-//            PolygonShape roofShape = new PolygonShape();
-//            roofShape.setAsBox(app.getWidth()/2.0f, wallThick);
-//
-//            Body roof = physicsWorld.createBody(wallDef);
-//            roof.createFixture(roofShape, 1);
-//            roof.setTransform(new Vector2(app.getWidth()/2.0f, 20), 0);
-//        }
         
     }
     

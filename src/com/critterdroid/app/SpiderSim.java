@@ -10,9 +10,6 @@ import com.badlogic.gdx.Graphics;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
-import com.badlogic.gdx.physics.box2d.BodyDef;
-import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
-import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.physics.box2d.joints.RevoluteJoint;
 import com.badlogic.gdx.scenes.scene2d.ui.Window;
@@ -22,9 +19,7 @@ import com.critterdroid.bio.act.ServoRevoluteJoint;
 import com.critterdroid.bio.act.ColorBodyTowards;
 import com.critterdroid.bio.brain.BrainWiring;
 import com.critterdroid.bio.brain.RandomWiring;
-import com.critterdroid.bio.feel.Orientation;
 import com.critterdroid.bio.feel.Retina;
-import com.critterdroid.bio.feel.VelocityAngular;
 import com.critterdroid.entities.Critter;
 import com.critterdroid.simulation.App;
 import com.critterdroid.simulation.ui.ParameterPanel;
@@ -321,7 +316,7 @@ public class SpiderSim implements Simulation {
         
         world.setGravity(new Vector2(0, 9.8f));
 
-        addWorldBox(app, world, 16f, 7f, 0.1f);
+        Spacegraph.addWorldBox(app, world, 16f, 7f, 0.1f);
         
         Spider r;
         //app.addCritter(r = new Spider(3, 9, 0.8f, 0, 0, new Color(0.5f, 1f, 0.1f, 0.8f), new RandomWiring(10000, 2, 12, 0.5f, 0.1f)));
@@ -353,84 +348,6 @@ public class SpiderSim implements Simulation {
 //            sim.newRectangle(r, r*1.6f, x, y, 0, c, 4.0f);
 //        }
     
-    public void addWorldBox(final App app, final World physicsWorld, float w, float h, float wallThick) {
-        
-        //create walls to keep the balls in bounds:
-        PolygonShape verticalWall = new PolygonShape();
-        verticalWall.setAsBox(wallThick, h/2f);
-
-        PolygonShape horizontalWall = new PolygonShape();
-        horizontalWall.setAsBox(w/2f,  wallThick );
-
-        {
-            BodyDef wallDef = new BodyDef();
-            wallDef.type = BodyType.StaticBody;
-
-            //left wall:
-            Body leftWall = physicsWorld.createBody(wallDef);
-            leftWall.createFixture(verticalWall, 1);
-            leftWall.setTransform(new Vector2(-w/2, wallThick), 0);
-        }
-
-        {
-            BodyDef wallDef = new BodyDef();
-            wallDef.type = BodyType.StaticBody;
-
-            //floor:
-            Body bottomWall = physicsWorld.createBody(wallDef);
-            bottomWall.createFixture(horizontalWall, 1);
-            bottomWall.setTransform(new Vector2(0, h/2), 0);
-            
-            app.setGroundBody(bottomWall);
-        }
-
-        {
-            BodyDef wallDef = new BodyDef();
-            wallDef.type = BodyType.StaticBody;
-
-            //right wall:
-            Body rightWall = physicsWorld.createBody(wallDef);
-            rightWall.createFixture(verticalWall, 1);
-            rightWall.setTransform(new Vector2(w/2, wallThick), 0);
-        }
-        
-        {
-            BodyDef wallDef = new BodyDef();
-            wallDef.type = BodyType.StaticBody;
-
-            //ceiling:
-            Body topWall = physicsWorld.createBody(wallDef);
-            topWall.createFixture(horizontalWall, 1);
-            topWall.setTransform(new Vector2(0, -h/2), 0);
-        }
-        
-//        {
-//            BodyDef wallDef = new BodyDef();
-//            wallDef.type = BodyType.StaticBody;
-//            
-//            //right wall:
-//            Body rightWall = physicsWorld.createBody(wallDef);
-//            rightWall.createFixture(verticalWall, wallThick);
-//            rightWall.setTransform(new Vector2(app.getWidth()-20, app.getHeight()/2.0f), 0);
-//            //rightWall.setTransform(new Vector2(app.getWidth()-50, 0), 0);
-//        }
-        
-
-        
-//        {
-//            BodyDef wallDef = new BodyDef();
-//            wallDef.type = BodyType.StaticBody;
-//
-//            //ceiling:
-//            PolygonShape roofShape = new PolygonShape();
-//            roofShape.setAsBox(app.getWidth()/2.0f, wallThick);
-//
-//            Body roof = physicsWorld.createBody(wallDef);
-//            roof.createFixture(roofShape, 1);
-//            roof.setTransform(new Vector2(app.getWidth()/2.0f, 20), 0);
-//        }
-        
-    }
     
     public static void main(String[] args) {
         App.run(new SpiderSim(), "Arm", 1280, 720);
