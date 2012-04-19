@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.critterdroid.simulation;
+package com.critterdroid.app;
 
 import com.badlogic.gdx.Graphics;
 import com.badlogic.gdx.graphics.Color;
@@ -16,6 +16,7 @@ import com.critterdroid.bio.Material;
 import com.critterdroid.bio.Material.Text;
 import com.critterdroid.bio.Simulation;
 import com.critterdroid.entities.Critter;
+import com.critterdroid.simulation.App;
 
 /**
  *
@@ -76,10 +77,14 @@ public class Spacegraph implements Simulation {
 //        snake.orientationSteps = 6;
 //        app.addCritter(snake);
         
-        for (int i = 0; i < 4; i++) {
-            Material m = new Material(Color.ORANGE, new Color(1.0f, 0.9f, 0, 0.5f), 3);
-            m.addText(new Text("SeH", 0, 0, 1, 1));
+        for (int i = 0; i < 2; i++) {
+            Material m = new Material(Color.GRAY, new Color(1.0f, 0.5f, 0, 0.5f), 3);
+            m.addText(new Text("Text", -6, 1, 1.0f, 1.0f));
             addCircleRock(app, 2f, -2f+i*0.3f, 0.1f + ((float)Math.random()) * 0.15f, m);
+
+            
+            sim.newRectangle(1.9f, 1.4f, 3f, -2f+i*0.3f, 0, 1.0f, m);
+            
         }
 
         
@@ -89,9 +94,9 @@ public class Spacegraph implements Simulation {
         sim.newCircle(r, x, y, 1.0f, m);
     }
 //    
-////        public void addRectRock(App sim, float x, float y, float r, Color c) {
-////            sim.newRectangle(r, r*1.6f, x, y, 0, c, 4.0f);
-////        }
+//        public void addRectRock(App sim, float x, float y, float , Material c) {
+//            sim.newRectangle(r, r*1.6f, x, y, 4.0, c);
+//        }
 //    
     public void addWorldBox(final App app, final World physicsWorld, float w, float h, float wallThick) {
         

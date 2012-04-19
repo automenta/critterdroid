@@ -14,6 +14,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.VertexAttribute;
 import com.badlogic.gdx.graphics.VertexAttributes;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.BitmapFont.TextBounds;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -625,7 +626,8 @@ public class App implements ApplicationListener, InputProcessor {
                     drawText(center.x, center.y, angle, m.texts);
         }
     }
-
+               Matrix4 m = new Matrix4();                
+ 
     public void drawText(float cx, float cy, float angle, List<Text> texts) {
             Gdx.gl10.glPushMatrix();
                 final int viewHeight = Gdx.graphics.getHeight();
@@ -640,17 +642,20 @@ public class App implements ApplicationListener, InputProcessor {
                 fontSpriteBatch.begin();
                 fontSpriteBatch.setProjectionMatrix(cam.projection);
                 
-                Matrix4 m = new Matrix4();                
-//                m.translate(cx-cam.position.x, -cy, 0);
-                System.out.println(cy + " " + cam.position.y);
-                m.translate(cx-cam.position.x, -cy+(viewHeight - cam.position.y), 0);
-                m.scale(0.1f,0.1f, 1f);
-                m.rotate(0, 0, 1, (float)(angle*180.0/Math.PI));
+
+                int alignmentWidth = 280;
+                
+                        TextBounds bounds = font.getWrappedBounds(t.text, alignmentWidth);
+                        float x = (bounds.width / 2) * t.scale.x - t.position.x / t.scale.x;
+                        float y = (bounds.height / 2) * t.scale.y - t.position.y / t.scale.y;
+                
+                m.setToTranslation(cx-cam.position.x, -cy+(viewHeight - cam.position.y), 0);
+//                m.translate(cx-cam.position.x, -cy+(viewHeight - cam.position.y), 0);
+                m.rotate(0, 0, 1, (float)(-angle*180.0/Math.PI) - camRotate);
+                m.scale(t.scale.x/bounds.width,t.scale.y/bounds.height, 1f);
                 fontSpriteBatch.setTransformMatrix(m);
 
                 font.setColor(Color.WHITE);
-
-                float alignmentWidth;
 
 //                if (false) {
 //                        alignmentWidth = 0;
@@ -664,9 +669,8 @@ public class App implements ApplicationListener, InputProcessor {
 //                }
 
                 if (true) {
-                        alignmentWidth = 280;
-                        // font.drawMultiLine(spriteBatch, text, x, viewHeight - y, alignmentWidth, HAlignment.RIGHT);
-                        font.drawWrapped(fontSpriteBatch, t.text, 0, 0, alignmentWidth, BitmapFont.HAlignment.LEFT);
+                // font.drawMultiLine(spriteBatch, text, x, viewHeight - y, alignmentWidth, HAlignment.RIGHT);
+                        font.drawWrapped(fontSpriteBatch, t.text, -x, y, alignmentWidth, BitmapFont.HAlignment.LEFT);
                         
                 }
 
@@ -893,6 +897,7 @@ public class App implements ApplicationListener, InputProcessor {
     }
     Vector2 pointerAtDragStart;
     Vector3 posAtDragStart;
+    float camRotate = 0;
 
     @Override
     public boolean touchDragged(int newx, int newy, int pointer) {
@@ -921,7 +926,9 @@ public class App implements ApplicationListener, InputProcessor {
     @Override
     public boolean scrolled(int amount) {
         if (mouseButtonPressed[1]) {
-            cam.rotate(5.0f * amount, 0, 0, 1f);
+            float r = 5.0f * amount;
+            camRotate += r;
+            cam.rotate(r, 0, 0, 1f);
         } else {
             targetZoom *= 1.0f + ((float) amount) / 10.0f;
         }
@@ -946,7 +953,7 @@ public class App implements ApplicationListener, InputProcessor {
         return stage;
     }
 
-    void addWindow(Window w) {
+    public void addWindow(Window w) {
         getStage().addActor(w);
     }
 

@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.critterdroid.simulation;
+package com.critterdroid.app;
 
 import com.critterdroid.bio.feel.QuantizedScalarInput;
 import com.critterdroid.simulation.ui.SliderListener;
@@ -26,6 +26,7 @@ import com.critterdroid.bio.feel.Orientation;
 import com.critterdroid.bio.feel.Retina;
 import com.critterdroid.bio.feel.VelocityAngular;
 import com.critterdroid.entities.Critter;
+import com.critterdroid.simulation.App;
 import com.critterdroid.simulation.ui.ParameterPanel;
 import java.util.LinkedList;
 import java.util.List;
