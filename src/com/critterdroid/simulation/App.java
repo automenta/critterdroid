@@ -32,14 +32,7 @@ import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.QueryCallback;
 import com.badlogic.gdx.physics.box2d.Shape;
 import com.badlogic.gdx.physics.box2d.World;
-import com.badlogic.gdx.physics.box2d.joints.DistanceJoint;
-import com.badlogic.gdx.physics.box2d.joints.DistanceJointDef;
-import com.badlogic.gdx.physics.box2d.joints.MouseJoint;
-import com.badlogic.gdx.physics.box2d.joints.MouseJointDef;
-import com.badlogic.gdx.physics.box2d.joints.RevoluteJoint;
-import com.badlogic.gdx.physics.box2d.joints.RevoluteJointDef;
-import com.badlogic.gdx.physics.box2d.joints.WeldJoint;
-import com.badlogic.gdx.physics.box2d.joints.WeldJointDef;
+import com.badlogic.gdx.physics.box2d.joints.*;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.CheckBox;
@@ -760,7 +753,6 @@ public class App implements ApplicationListener, InputProcessor {
         BodyDef b = new BodyDef();
         b.type = BodyType.DynamicBody;
 
-
         return initBody(b, s, x, y, density, defaultFriction, m);
     }
 
@@ -791,13 +783,29 @@ public class App implements ApplicationListener, InputProcessor {
     }
 
     //http://www.box2d.org/manual.html#_Toc258082973
-    public DistanceJoint joinDistance(Body a, Body b, Vector2 anchorA, Vector2 anchorB) {
+    public DistanceJoint joinDistance(Body a, Body b, Vector2 anchorA, Vector2 anchorB, float length) {
         DistanceJointDef jd = new DistanceJointDef();
         jd.initialize(a, b, anchorA, anchorB);
-        jd.collideConnected = true;
-        jd.length = 0;
+        jd.collideConnected = false;
+        jd.length = length;        
+        jd.frequencyHz = 1.0f;
+        jd.dampingRatio = 0.0f;        
 
         DistanceJoint j = (DistanceJoint) world.createJoint(jd);
+        
+        return j;
+    }
+    public PrismaticJoint joinPrismatic(Body a, Body b, Vector2 anchor, Vector2 direction) {
+        PrismaticJointDef jd = new PrismaticJointDef();
+        jd.initialize(a, b, anchor, direction);
+        jd.collideConnected = true;
+        jd.lowerTranslation = -2;
+        jd.upperTranslation = 2;
+        jd.enableLimit = true;
+                
+
+        PrismaticJoint j = (PrismaticJoint) world.createJoint(jd);
+        
         return j;
     }
 
@@ -996,6 +1004,18 @@ public class App implements ApplicationListener, InputProcessor {
         cam.zoom = cam.zoom * (1.0f - momentum) + (momentum) * targetZoom;
         
         
+        if ((currentAngle < 0) && (targetAngle > 0)) {
+            currentAngle += (float)(Math.PI*2.0f);
+        }
+        if ((currentAngle > 0) && (targetAngle < 0)) {
+            targetAngle += (float)(Math.PI*2.0f);            
+        }
+        if (currentAngle - targetAngle > ((float)Math.PI*2.0f)) {
+            currentAngle -= Math.PI*2.0f;
+        }
+        if (targetAngle - currentAngle > ((float)Math.PI*2.0f)) {
+            targetAngle -= Math.PI*2.0f;
+        }
         currentAngle = (1.0f - momentum) * currentAngle + (momentum) * targetAngle;
         
         cam.up.set((float)Math.sin(currentAngle), (float)Math.cos(currentAngle), 0);
