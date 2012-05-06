@@ -56,11 +56,11 @@ public class MeshWiring implements BrainWiring {
         }
         for (int j = 0; j < width/2; j++)
             for (int i = 0; i < b.getNumInputs(); i++) {
-                b.newSynapse(b.getSenseNeuron(i), mesh[i][j], 1.0f);
+                b.newSynapse(b.getInput(i), mesh[i][j], 1.0f);
                 mesh[i][j].setIsPlastic(false);
             }
         for (int o = 0; o < b.getNumOutputs(); o++) {
-            mesh[o][width-1].setMotor( b.getMotorNeuron(o) );
+            mesh[o][width-1].setMotor( b.getOutput(o) );
         }
         
         

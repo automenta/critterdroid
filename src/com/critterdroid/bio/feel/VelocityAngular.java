@@ -5,13 +5,13 @@
 package com.critterdroid.bio.feel;
 
 import com.badlogic.gdx.physics.box2d.Body;
-import jcog.critterding.SenseNeuron;
+import jcog.critterding.InputNeuron;
 
 /**
  *
  * @author seh
  */
-public class VelocityAngular extends SenseNeuron {
+public class VelocityAngular extends InputNeuron {
     private final Body body;
     
 

@@ -1,8 +1,7 @@
 package jcog.critterding;
 
-import com.syncleus.dann.neural.OutputNeuron;
 
-public class MotorNeuron implements CritterdingNeuron, OutputNeuron {
+public class OutputNeuron implements CritterdingNeuron, com.syncleus.dann.neural.OutputNeuron {
     private boolean firing;
 
     public void setFiring(boolean f) {
@@ -20,6 +19,7 @@ public class MotorNeuron implements CritterdingNeuron, OutputNeuron {
     public double getOutput() {
         return firing ? 1.0 : 0.0;
     }
+    
 
     @Override
     public void tick() {

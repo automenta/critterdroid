@@ -6,13 +6,13 @@ package com.critterdroid.bio.feel;
 
 import com.badlogic.gdx.physics.box2d.Body;
 import jcog.critterding.CritterdingBrain;
-import jcog.critterding.SenseNeuron;
+import jcog.critterding.InputNeuron;
 
 /**
  *
  * @author seh
  */
-public class Orientation extends SenseNeuron {
+public class Orientation extends InputNeuron {
 
     public static void newVector(CritterdingBrain brain, Body body, int orientationSteps) {
         double dr = (Math.PI*2.0)/((float)orientationSteps);

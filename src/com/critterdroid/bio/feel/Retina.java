@@ -10,9 +10,9 @@ import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.RayCastCallback;
 import com.critterdroid.bio.Material;
+import com.critterdroid.bio.brain.Brain;
 import com.critterdroid.simulation.App;
-import jcog.critterding.CritterdingBrain;
-import jcog.critterding.SenseNeuron;
+import jcog.critterding.InputNeuron;
 
 /**
  *
@@ -24,14 +24,14 @@ public class Retina implements RayCastCallback {
     private final Body body;
     private final Vector2 offset;
     private final float angle;
-    private final CritterdingBrain brain;
+    private final Brain brain;
     final public Vector2 p1 = new Vector2();
     final public Vector2 p2 = new Vector2();
     final public Vector2 pint = new Vector2();
     private float maxDistance;
     private Material material;
 
-    public class RetinaSensor extends SenseNeuron {
+    public class RetinaSensor extends InputNeuron {
         private final int channel;
         private final float iStart;
         private final float iStop;
@@ -64,7 +64,7 @@ public class Retina implements RayCastCallback {
         
     }
     
-    public Retina(final CritterdingBrain brain, Body body, Vector2 offset, float angle, float maxDistance, int levels) {
+    public Retina(final Brain brain, Body body, Vector2 offset, float angle, float maxDistance, int levels) {
         super();
 
         this.body = body;

@@ -4,8 +4,8 @@
  */
 package com.critterdroid.bio.feel;
 
-import jcog.critterding.CritterdingBrain;
-import jcog.critterding.SenseNeuron;
+import com.critterdroid.bio.brain.Brain;
+import jcog.critterding.InputNeuron;
 
 /**
  *
@@ -13,7 +13,7 @@ import jcog.critterding.SenseNeuron;
  */
 public abstract class QuantizedScalarInput {
 
-    public QuantizedScalarInput(CritterdingBrain brain, int levels) {
+    public QuantizedScalarInput(Brain brain, int levels) {
         float dl = 1.0F / ((float) levels);
         float l = 0;
         for (int i = 0; i < levels; i++) {
@@ -22,7 +22,7 @@ public abstract class QuantizedScalarInput {
         }
     }
 
-    public class QSensor extends SenseNeuron {
+    public class QSensor extends InputNeuron {
 
         private final float iStart;
         private final float iStop;

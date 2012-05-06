@@ -15,7 +15,7 @@ import com.syvys.jaRBM.RBMNetLearn.RBMNetLearner;
 import java.util.Arrays;
 import java.util.LinkedList;
 import jcog.critterding.CritterdingBrain;
-import jcog.critterding.SenseNeuron;
+import jcog.critterding.InputNeuron;
 
 /**
  * adds a RBM Perception Coprocessor to a CritterdingBrain.  
@@ -29,7 +29,7 @@ public class RBMPerception {
     private final StochasticBinaryLayer hiddenLayer;
     private final LinearLayer visibleLayer;
     private RBMNet myrbmnet;
-    private final LinkedList<SenseNeuron> existingInputs;
+    private final LinkedList<InputNeuron> existingInputs;
     private double[] outputs;
     
     
@@ -45,11 +45,11 @@ public class RBMPerception {
         RBMImpl rbm1 = new RBMImpl(visibleLayer, hiddenLayer);
         myrbmnet = new RBMNet(rbm1);
         
-        existingInputs = new LinkedList(brain.getSense());
+        existingInputs = new LinkedList(brain.getInputs());
         
         for (int i = 0; i < existingInputs.size(); i++) {
             final int ii = i;
-            brain.addInput(new SenseNeuron() {
+            brain.addInput(new InputNeuron() {
                 @Override public double getOutput() {                    
                     double o = outputs[ii];
                     if (Double.isNaN(o))
@@ -74,7 +74,7 @@ public class RBMPerception {
         
         double batchdata[][] = new double[1][existingInputs.size()];
         int i = 0;
-        for (SenseNeuron sn : existingInputs) {
+        for (InputNeuron sn : existingInputs) {
             batchdata[0][i] = sn.getOutput();
             //batchdata[0][i] = 0;
             i++;

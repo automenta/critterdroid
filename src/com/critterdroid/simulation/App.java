@@ -786,7 +786,7 @@ public class App implements ApplicationListener, InputProcessor {
     public DistanceJoint joinDistance(Body a, Body b, Vector2 anchorA, Vector2 anchorB, float length) {
         DistanceJointDef jd = new DistanceJointDef();
         jd.initialize(a, b, anchorA, anchorB);
-        jd.collideConnected = false;
+        jd.collideConnected = true;
         jd.length = length;        
         jd.frequencyHz = 1.0f;
         jd.dampingRatio = 0.0f;        
@@ -909,6 +909,13 @@ public class App implements ApplicationListener, InputProcessor {
 
         if (button == 0) {
              updateHitBody();
+             if (hitBody!=null) {
+                 System.out.println("hit: " + hitBody + " with " + hitBody.getUserData());
+                 if (hitBody.getFixtureList().get(0).getUserData()!=null) {
+                     Material m = (Material)hitBody.getFixtureList().get(0).getUserData();
+                     m.onTouchDown(0, testPoint);
+                 }
+             }
             
             // if we hit something we create a new mouse joint
             // and attach it to the hit body.
@@ -1007,15 +1014,15 @@ public class App implements ApplicationListener, InputProcessor {
         if ((currentAngle < 0) && (targetAngle > 0)) {
             currentAngle += (float)(Math.PI*2.0f);
         }
-        if ((currentAngle > 0) && (targetAngle < 0)) {
+        else if ((currentAngle > 0) && (targetAngle < 0)) {
             targetAngle += (float)(Math.PI*2.0f);            
         }
-        if (currentAngle - targetAngle > ((float)Math.PI*2.0f)) {
-            currentAngle -= Math.PI*2.0f;
-        }
-        if (targetAngle - currentAngle > ((float)Math.PI*2.0f)) {
-            targetAngle -= Math.PI*2.0f;
-        }
+//        if (currentAngle - targetAngle > ((float)Math.PI*2.0f)) {
+//            currentAngle -= Math.PI*2.0f;
+//        }
+//        else if (targetAngle - currentAngle > ((float)Math.PI*2.0f)) {
+//            targetAngle -= Math.PI*2.0f;
+//        }
         currentAngle = (1.0f - momentum) * currentAngle + (momentum) * targetAngle;
         
         cam.up.set((float)Math.sin(currentAngle), (float)Math.cos(currentAngle), 0);

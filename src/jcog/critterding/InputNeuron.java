@@ -1,8 +1,6 @@
 package jcog.critterding;
 
-import com.syncleus.dann.neural.InputNeuron;
-
-public class SenseNeuron implements CritterdingNeuron, InputNeuron {
+public class InputNeuron implements CritterdingNeuron, com.syncleus.dann.neural.InputNeuron {
     
     private double senseInput;
 

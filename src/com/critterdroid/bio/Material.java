@@ -19,6 +19,10 @@ public class Material {
     public Color strokeColor;
     public int strokeWidth;
     public List<Text> texts;
+
+    public void onTouchDown(int i, Vector2 p) {
+        
+    }
     
     public static class Text {
         public final String text;

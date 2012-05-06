@@ -4,6 +4,7 @@
  */
 package jcog.critterding;
 
+import com.critterdroid.bio.brain.Brain;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -15,11 +16,9 @@ import jcog.math.RandomNumber;
 /**
  * java port of critterding's BRAINZ system
  */
-public class CritterdingBrain /*extends AbstractLocalBrain<SenseNeuron, MotorNeuron, CritterdingNeuron, SimpleSynapse<CritterdingNeuron>>*/ {
+public class CritterdingBrain extends Brain /*extends AbstractLocalBrain<SenseNeuron, MotorNeuron, CritterdingNeuron, SimpleSynapse<CritterdingNeuron>>*/ {
     public final Map<CritterdingNeuron, CritterdingSynapse[]> neuronSynapses = new HashMap();
     public final List<CritterdingSynapse> synapses = new LinkedList();
-    final List<SenseNeuron> sense = new ArrayList();
-    final List<MotorNeuron> motor = new ArrayList();
     final List<InterNeuron> neuron = new ArrayList();
     
     private transient InterNeuron[] neuronArray = null;
@@ -28,7 +27,6 @@ public class CritterdingBrain /*extends AbstractLocalBrain<SenseNeuron, MotorNeu
     double percentChanceInhibitoryNeuron;      // percent chance that when adding a new random neuron, it's inhibitory
     double percentChanceConsistentSynapses;    // synaptic consistancy, meaning all synapses of a neuron will be OR I OR E:  if set to 0, neurons will have mixed I and E synapses
     double percentChanceInhibitorySynapses;    //    // percent chance that when adding a new random neuron, it has inhibitory synapses
-    double percentChanceMotorNeuron;   //    // percent chance that when adding a new random neuron, it has a motor function
     double percentChancePlasticNeuron; //    // percent chance that when adding a new random neuron, it is has synaptic plasticity
     double minPlasticityStrengthen;    //    // min/max synaptic plasticity strengthening factor
     double maxPlasticityStrengthen;    //    // min/max synaptic plasticity strengthening factor
@@ -93,12 +91,7 @@ public class CritterdingBrain /*extends AbstractLocalBrain<SenseNeuron, MotorNeu
 //        }
 //    }
 
-    public void forwardOutputs() {
-        // clear Motor Outputs
-        for (MotorNeuron mn : motor) {
-            mn.tick();
-        }
-    }
+
 
     public CritterdingSynapse[] getIncomingSynapses(final InterNeuron n) {
         return neuronSynapses.get(n);
@@ -124,7 +117,7 @@ public class CritterdingBrain /*extends AbstractLocalBrain<SenseNeuron, MotorNeu
             n.forward(getIncomingSynapses(n));
 
             boolean fired = n.nextOutput!=0;
-            MotorNeuron mn = n.motor;
+            OutputNeuron mn = n.motor;
             
             if (fired) {
                 neuronsFired++;
@@ -148,35 +141,11 @@ public class CritterdingBrain /*extends AbstractLocalBrain<SenseNeuron, MotorNeu
 
     }
 
-//    MotorNeuron motor(int i) {
-//        return motor.get(i);
-//    }
-//
-//    SenseNeuron sense(int i) {
-//        return sense.get(i);
-//    }
-    public int getNumInputs() {
-        return sense.size();
-    }
-
-    public int getNumOutputs() {
-        return motor.size();
-    }
-
     public List<CritterdingSynapse> getSynapses() {
         return synapses;
     }
 
-    
-    public SenseNeuron getSenseNeuron(final int i) {
-        return sense.get(i);
-    }
-
-    public MotorNeuron getMotorNeuron(final int i) {
-        return motor.get(i);
-    }
-
-    public MotorNeuron getRandomMotorNeuron() {
+    public OutputNeuron getRandomMotorNeuron() {
         return motor.get((int) RandomNumber.getInt(0, motor.size() - 1));
     }
 
@@ -185,7 +154,7 @@ public class CritterdingBrain /*extends AbstractLocalBrain<SenseNeuron, MotorNeu
     }
 
     //final Set<Integer> mappedSenseNeurons = new HashSet();
-    public SenseNeuron getRandomSenseNeuron() {
+    public InputNeuron getRandomSenseNeuron() {
         final int i = (int) RandomNumber.getInt(0, sense.size() - 1);
         //mappedSenseNeurons.add(i);
         //System.out.println("sense neuron: " + ((((float)mappedSenseNeurons.size()) / ((float)this.getNumInputs()))));
@@ -198,7 +167,7 @@ public class CritterdingBrain /*extends AbstractLocalBrain<SenseNeuron, MotorNeu
         NeuronBuilder an = new NeuronBuilder();
 
         if (Math.random() <= percentChanceMotorNeuron) {
-            MotorNeuron mn = getRandomMotorNeuron();
+            OutputNeuron mn = getRandomMotorNeuron();
 
             // check if motor already used
             boolean proceed = true;
@@ -265,35 +234,6 @@ public class CritterdingBrain /*extends AbstractLocalBrain<SenseNeuron, MotorNeu
         bn.synapseBuilders.add(as);
 
         return as;
-    }
-
-    public MotorNeuron newOutput(/*bool* var, unsigned int id*/) {
-        MotorNeuron m = new MotorNeuron();
-        motor.add(m);
-        return m;
-    }
-
-    public void addOutput(MotorNeuron m) {
-        motor.add(m);
-    }
-
-    public void addInput(SenseNeuron s) {
-        sense.add(s);
-    }
-
-    public SenseNeuron newInput() {
-        SenseNeuron s = new SenseNeuron();
-        sense.add(s);
-        return s;
-    }
-
-
-    public List<SenseNeuron> getSense() {
-        return sense;
-    }
-
-    public List<MotorNeuron> getMotor() {
-        return motor;
     }
 
     public List<InterNeuron> getInter() {

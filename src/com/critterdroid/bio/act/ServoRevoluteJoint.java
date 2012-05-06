@@ -5,8 +5,8 @@
 package com.critterdroid.bio.act;
 
 import com.badlogic.gdx.physics.box2d.joints.RevoluteJoint;
-import jcog.critterding.CritterdingBrain;
-import jcog.critterding.MotorNeuron;
+import com.critterdroid.bio.brain.Brain;
+import jcog.critterding.OutputNeuron;
 
 /**
  *
@@ -25,7 +25,7 @@ public class ServoRevoluteJoint  {
     float stepActivation[];
     private final int steps;
 
-    float stepMomentum = 0.9f;
+    float stepMomentum = 0.5f;
     float rotationMomentum = 0.7f;
     
     private final float angleFrom;
@@ -33,7 +33,7 @@ public class ServoRevoluteJoint  {
     
     int best=0;
     
-    public ServoRevoluteJoint(CritterdingBrain b, RevoluteJoint rj, float angleFrom, float angleTo, int steps) {
+    public ServoRevoluteJoint(Brain b, RevoluteJoint rj, float angleFrom, float angleTo, int steps) {
         super();
         
         this.joint = rj;
@@ -54,7 +54,7 @@ public class ServoRevoluteJoint  {
         float t = angleFrom;
         for (int i = 0; i < steps; i++) {
             final int ii = i;
-            b.addOutput(new MotorNeuron() {
+            b.addOutput(new OutputNeuron() {
 
                 @Override
                 public void onFired() {
@@ -83,11 +83,6 @@ public class ServoRevoluteJoint  {
     }
     
     public void tick() {
-        // Fade
-        for (int i = 0; i < steps; i++) {
-            stepActivation[i] *= stepMomentum;
-        }
-
         //A: winner take all        
         float maxValue = 0;
         for (int i = 0; i < steps; i++) {
@@ -96,6 +91,12 @@ public class ServoRevoluteJoint  {
                 maxValue = stepActivation[i];
             }
         }
+
+        // Fade
+        for (int i = 0; i < steps; i++) {
+            stepActivation[i] *= stepMomentum;
+        }
+
 
         //B: TODO vector interpolation       ?
         

@@ -5,13 +5,13 @@
 package com.critterdroid.bio.act;
 
 import com.badlogic.gdx.physics.box2d.joints.RevoluteJoint;
-import jcog.critterding.MotorNeuron;
+import jcog.critterding.OutputNeuron;
 
 /**
  *
  * @author seh
  */
-public class RotateRevoluteJoint extends MotorNeuron {
+public class RotateRevoluteJoint extends OutputNeuron {
     private final RevoluteJoint joint;
     private float factor;
 

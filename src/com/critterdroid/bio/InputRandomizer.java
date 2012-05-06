@@ -5,7 +5,7 @@
 package com.critterdroid.bio;
 
 import jcog.critterding.CritterdingBrain;
-import jcog.critterding.SenseNeuron;
+import jcog.critterding.InputNeuron;
 import jcog.math.RandomNumber;
 
 /**
@@ -20,7 +20,7 @@ public class InputRandomizer {
     }
 
     public void random(double min, double max) {
-        for (SenseNeuron sn : brain.getSense()) {
+        for (InputNeuron sn : brain.getInputs()) {
             sn.setInput(RandomNumber.getDouble(min, max));
         }
     }

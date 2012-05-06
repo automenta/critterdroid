@@ -15,7 +15,7 @@ import java.awt.Graphics;
 import java.util.Collection;
 import javax.swing.JPanel;
 import jcog.critterding.CritterdingBrain;
-import jcog.critterding.SenseNeuron;
+import jcog.critterding.InputNeuron;
 
 /**
  *
@@ -68,7 +68,7 @@ public class RBMWindow extends JPanel {
         //add latest vector to row 0
         int j = 0;
         for (CritterdingBrain x : b) {
-            for (SenseNeuron sn : x.getSense()) 
+            for (InputNeuron sn : x.getInputs()) 
                 batchdata[0][j++] = sn.getOutput();
         }
 

@@ -7,13 +7,13 @@ package com.critterdroid.bio.act;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import java.awt.geom.RectangularShape;
-import jcog.critterding.MotorNeuron;
+import jcog.critterding.OutputNeuron;
 
 /**
  *
  * @author seh
  */
-public class StretchRectangle extends MotorNeuron {
+public class StretchRectangle extends OutputNeuron {
     private final float growth;
     private final Fixture fixture;
 

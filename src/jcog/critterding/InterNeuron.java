@@ -1,12 +1,12 @@
 package jcog.critterding;
 
-public class InterNeuron extends MotorNeuron {
+public class InterNeuron extends OutputNeuron {
 
     double output, nextOutput;
     int maxSynapses;
     boolean isInhibitory;
     double firingThreshold;
-    MotorNeuron motor;
+    OutputNeuron motor;
     double potential;
     double potentialDecay;
     boolean isPlastic;
@@ -17,6 +17,8 @@ public class InterNeuron extends MotorNeuron {
     
     //List<SynapseBuilder> synapseBuilders;
 
+    
+    
     public InterNeuron(double potentialDecay, double plasticityStrengthen, double plasticityWeaken ) {
         super();
         isInhibitory = false;
@@ -179,11 +181,11 @@ public class InterNeuron extends MotorNeuron {
 //        return synapseBuilders;
 //    }
 
-    public MotorNeuron getMotor() {
+    public OutputNeuron getMotor() {
         return motor;
     }
 
-    public void setMotor(MotorNeuron motor) {
+    public void setMotor(OutputNeuron motor) {
         this.motor = motor;
     }
 

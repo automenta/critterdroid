@@ -8,13 +8,13 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.critterdroid.bio.Material;
-import jcog.critterding.MotorNeuron;
+import jcog.critterding.OutputNeuron;
 
 /**
  *
  * @author seh
  */
-public class ColorBodyTowards extends MotorNeuron {
+public class ColorBodyTowards extends OutputNeuron {
     private Material material;
     private final Color color;
     private final float momentum;

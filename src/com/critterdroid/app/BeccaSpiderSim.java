@@ -17,59 +17,61 @@ import com.critterdroid.bio.Material;
 import com.critterdroid.bio.Simulation;
 import com.critterdroid.bio.act.ServoRevoluteJoint;
 import com.critterdroid.bio.act.ColorBodyTowards;
+import com.critterdroid.bio.act.Spinner;
 import com.critterdroid.bio.act.Thruster;
-import com.critterdroid.bio.brain.BrainWiring;
-import com.critterdroid.bio.brain.RandomWiring;
+import com.critterdroid.bio.brain.BeccaBrain;
 import com.critterdroid.bio.feel.Retina;
 import com.critterdroid.entities.Critter;
 import com.critterdroid.simulation.App;
 import com.critterdroid.simulation.ui.ParameterPanel;
 import java.util.LinkedList;
 import java.util.List;
-import jcog.critterding.BrainReport;
-import jcog.critterding.CritterdingBrain;
-import jcog.critterding.InterNeuron;
 
 /**
  *
  * @author seh
  */
-public class SpiderSim implements Simulation {
+public class BeccaSpiderSim implements Simulation {
     private App sim;
 
-    public static class Spider extends Critter {
+    List<Body> blocks = new LinkedList();
+    
+    public class Spider extends Critter {
+//        float armLength = 0.65f;
+//        float armWidth = 0.30f;
+        float armLength = 0.65f/2f;
+        float armWidth = 0.30f/2f;
 
         int arms;
-        float armLength = 0.65f;
-        float armWidth = 0.30f;
         int armSegments;
 
         float torsoRadius = 0.4f;
         
-        float servoRange = ((float)Math.PI / 2.0f) * 0.9f;
-        int servoSteps = 7;
+        float servoRange = ((float)Math.PI / 2.0f) * 1.5f; //0.9f;
+        int servoSteps = 3;
         
-        int numRetinasPerSegment = 32;
-        int retinaLevels = 4;
+        int numRetinasPerSegment = 4;
+        int numThrustersPerTorso = 4;
+        int retinaLevels = 1;
         
-        final int velocityLevels = 16;
+        final int velocityLevels = 1;
 
-        int orientationSteps = 9;
+        int orientationLevels = 1;
         
         double initialVisionDistance = 10.0;
 
         float armSegmentExponent;
                 
-        public final CritterdingBrain brain = new CritterdingBrain();
+        public final BeccaBrain brain;
         List<Retina> retinas = new LinkedList();
         private final float ix;
         private final float iy;
         private final Color color;
         private final Material m;
         private App sim;
-        private final BrainWiring brainWiring;
+        private Body torso;
 
-        public Spider(int arms, int armSegments, float armSegmentExponent, float ix, float iy, Color c, BrainWiring bw) {
+        public Spider(int arms, int armSegments, float armSegmentExponent, float ix, float iy, Color c) {
             super();
             this.arms = arms;
             this.armSegments = armSegments;
@@ -77,8 +79,51 @@ public class SpiderSim implements Simulation {
             this.ix = ix;
             this.iy = iy;
             this.color = c;
-            this.brainWiring = bw;
             m = new Material(color, Color.DARK_GRAY, 2);
+            
+            brain = new BeccaBrain() {
+                float lx, ly;
+                float maxDist = 0.2f;
+                
+
+                @Override
+                public void init(float m) {
+                    super.init(m);
+                    
+                    lx = torso.getWorldCenter().x;
+                    ly = torso.getWorldCenter().y;
+                }
+                
+                
+                @Override
+                public float getReward() {
+                    float x = torso.getWorldCenter().x;
+                    float y = torso.getWorldCenter().y;
+                    
+                    float distMoved = (float) Math.sqrt( (x - lx) * (x - lx) /* + (y - ly) * (y - ly) */ ) / maxDist;
+                    
+                    lx = x;
+                    ly = y;
+                    
+                    float avgDistToBlocks = 0;
+                    for (Body b : blocks) {
+                        avgDistToBlocks += b.getWorldCenter().dst(torso.getWorldCenter());
+                    }
+                    avgDistToBlocks /= blocks.size();
+                    avgDistToBlocks = 1f / (float)Math.sqrt(avgDistToBlocks);
+                    
+                    System.out.println("distMoved=" + distMoved);
+                    System.out.println("avgDistToBlocks=" + avgDistToBlocks);
+                    
+                    distMoved *= 0.5f;
+                    distMoved *= 0;
+                    
+                    float reward = Math.max(0f, Math.min(1.0f, distMoved + avgDistToBlocks));
+                    System.out.println("  reward=" + reward);
+                    return reward;
+                }
+                
+            };
         }
  
         public void addArm(Body base, float x, float y, float angle, int armSegments, float armLength, float armWidth) {
@@ -108,28 +153,31 @@ public class SpiderSim implements Simulation {
                         return j.getJointAngle()/(float)(Math.PI*2.0f);
                     }  
                 };
-                new QuantizedScalarInput(brain, velocityLevels) {
-                    @Override public float getValue() {
-                        final float zl = b.getLinearVelocity().len2();
-                        if (zl == 0) return 0;
-                        float xx = b.getLinearVelocity().x;
-                        xx*=xx;
-                        return xx/zl;
-                    }  
-                };
-                new QuantizedScalarInput(brain, velocityLevels) {
-                    @Override public float getValue() {
-                        final float zl = b.getLinearVelocity().len2();
-                        if (zl == 0) return 0;
-                        float yy = b.getLinearVelocity().y;
-                        yy*=yy;
-                        return yy/zl;
-                    }  
-                };
+                for (float ff = -1; ff<=1; ff+=2.0f ) {
+                    final float f = ff;
+                    new QuantizedScalarInput(brain, velocityLevels) {
+                        @Override public float getValue() {
+                            final float zl = b.getLinearVelocity().len();
+                            if (zl == 0) return 0;
+                            float xx = b.getLinearVelocity().x * f;
+                            return Math.max(0, xx/zl);
+                        }  
+                    };
+                    new QuantizedScalarInput(brain, velocityLevels) {
+                        @Override public float getValue() {
+                            final float zl = b.getLinearVelocity().len();
+                            if (zl == 0) return 0;
+                            float yy = b.getLinearVelocity().y * f;
+                            return Math.max(0, yy/zl);
+                        }  
+                    };
+            }
                         
-                new QuantizedScalarInput(brain, orientationSteps) {
+                new QuantizedScalarInput(brain, orientationLevels) {
                     @Override public float getValue() {
-                        return b.getAngle() / (float)(2.0 * Math.PI);
+                        float a = b.getAngle();
+                        if (a < 0) a+=Math.PI*2.0;
+                        return a / (float)(2.0 * Math.PI);
                     }                    
                 };
                 new QuantizedScalarInput(brain, velocityLevels) {
@@ -170,14 +218,16 @@ public class SpiderSim implements Simulation {
 
             this.sim = s;
             
-            Body base = sim.newCircle(torsoRadius, ix, iy, 1.0f, m);            
+            torso = sim.newCircle(torsoRadius, ix, iy, 0.5f, m);            
+            torso.setAngularDamping(0.7f);
+            torso.setLinearDamping(0.7f);
 
             float da = (float)((Math.PI*2.0)/arms);
             float a = 0;
             for (int i = 0; i < arms; i++) {
                 float ax = (float)(ix + (Math.cos(a) * torsoRadius));
                 float ay = (float)(iy + (Math.sin(a) * torsoRadius));
-                addArm(base, ax, ay, a, armSegments, armLength, armWidth);
+                addArm(torso, ax, ay, a, armSegments, armLength, armWidth);
                 a += da;
             }
 
@@ -186,15 +236,22 @@ public class SpiderSim implements Simulation {
             for (float z = 0; z < n; z++) {
 
                 float ba = z * (float)(Math.PI*2.0 / ((float)n));
-                retinas.add(new Retina(brain, base, new Vector2(0, 0), ba, (float)initialVisionDistance, retinaLevels));
+                retinas.add(new Retina(brain, torso, new Vector2(0, 0), ba, (float)initialVisionDistance, retinaLevels));
                 
-                brain.addOutput(new Thruster(base, ba));
             }
+            n = numThrustersPerTorso;
+            for (float z = 0; z < n; z++) {
+                float ba = z * (float)(Math.PI*2.0 / ((float)n));
+                //brain.addOutput(new Thruster(torso, ba));
+            }
+            
+            
+            //brain.addOutput(new Spinner(torso, -0.5f));
+            //brain.addOutput(new Spinner(torso, 0.5f));
 
             
-            brainWiring.wireBrain(brain);
-            
-            new BrainReport(brain);
+
+            brain.init( 2.5f );
             
         }
         
@@ -243,36 +300,37 @@ public class SpiderSim implements Simulation {
 
         public ParameterPanel newParameterPanel() {
             ParameterPanel sp = new ParameterPanel(sim.getSkin(), 300, 400);
-            sp.addSlider("Memory Factor", 0, 10.0f, 0.999f, new SliderListener() {
-
-                @Override
-                public void onChanged(float v) {
-                    for (InterNeuron in : brain.getInter()) {
-                        in.setPotentialDecay(v);
-                    }
-                }
-
-            }, "potential multiplier / cycle");
-            sp.addSlider("InterNeuron Firing Threshold", 0.1f, 2.0f, 1.0f, new SliderListener() {
-
-                @Override
-                public void onChanged(float v) {
-                    for (InterNeuron in : brain.getInter()) {
-                        in.setFiringThreshold(v);
-                    }
-                }
-
-            }, "potential");
-            sp.addSlider("Max Absolute Synapse Weight", 0.1f, 2.0f, 1.0f, new SliderListener() {
-
-                @Override
-                public void onChanged(float v) {
-                    for (InterNeuron in : brain.getInter()) {
-                        in.setMaxAbsoluteSynapseWeight(v);
-                    }
-                }
-
-            }, "weight");
+//            sp.addSlider("Memory Factor", 0, 10.0f, 0.999f, new SliderListener() {
+//
+//                @Override
+//                public void onChanged(float v) {
+//                    for (InterNeuron in : brain.getInter()) {
+//                        in.setPotentialDecay(v);
+//                    }
+//                }
+//
+//            }, "potential multiplier / cycle");
+//            sp.addSlider("InterNeuron Firing Threshold", 0.1f, 2.0f, 1.0f, new SliderListener() {
+//
+//                @Override
+//                public void onChanged(float v) {
+//                    for (InterNeuron in : brain.getInter()) {
+//                        in.setFiringThreshold(v);
+//                    }
+//                }
+//
+//            }, "potential");
+//            sp.addSlider("Max Absolute Synapse Weight", 0.1f, 2.0f, 1.0f, new SliderListener() {
+//
+//                @Override
+//                public void onChanged(float v) {
+//                    for (InterNeuron in : brain.getInter()) {
+//                        in.setMaxAbsoluteSynapseWeight(v);
+//                    }
+//                }
+//
+//            }, "weight");
+            
     //        sp.addSlider("Wobbly", 0.0f, 1.0f, 0.05f, new SliderListener() {
     //
     //            @Override
@@ -326,13 +384,12 @@ public class SpiderSim implements Simulation {
         
         World world = app.world;
         
-        world.setGravity(new Vector2(0, 9.8f));
+        world.setGravity(new Vector2(0, 5.8f));
 
         Spacegraph.addWorldBox(app, world, 16f, 7f, 0.1f);
         
         Spider r;
-        //app.addCritter(r = new Spider(3, 9, 0.8f, 0, 0, new Color(0.5f, 1f, 0.1f, 0.8f), new RandomWiring(10000, 2, 12, 0.5f, 0.1f)));
-        app.addCritter(r = new Spider(3, 4, 0.618f, 0, 0, new Color(0.4f, 0.9f, 1.0f, 0.8f), new RandomWiring(10000, 2, 200, 0.25f, 0.1f)));
+        app.addCritter(r = new Spider(1, 5, 0.618f, 0, 0, new Color(0.4f, 0.9f, 1.0f, 0.8f)));
         addControls("Spider", app, r);
 
 //        Spider snake = new Spider(1, 12, 0.9f, -4, -1, new Color(0.1f, 0.6f, 0.7f, 0.8f), new RandomWiring(2048, 1, 4, 0.5f, 0.2f));
@@ -353,7 +410,8 @@ public class SpiderSim implements Simulation {
     }
     
     public void addCircleRock(App sim, float x, float y, float r, Material m) {
-        sim.newCircle(r, x, y, 1.0f, m);
+        //blocks.add( sim.newCircle(r, x, y, 1.0f, m) );
+        blocks.add( sim.newRectangle(r, r*0.618f, x, y, 0, 1.0f, m) );
     }
     
 //        public void addRectRock(App sim, float x, float y, float r, Color c) {
@@ -362,6 +420,6 @@ public class SpiderSim implements Simulation {
     
     
     public static void main(String[] args) {
-        App.run(new SpiderSim(), "Arm", 1280, 720);
+        App.run(new BeccaSpiderSim(), "Arm", 1280, 720);
     }
 }

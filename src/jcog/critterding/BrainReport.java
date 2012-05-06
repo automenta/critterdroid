@@ -17,18 +17,18 @@ public class BrainReport {
         
         System.out.print(b.getNumInputs() + " inputs | " + b.getNumOutputs() + " outputs | " + b.getNumInterNeurons() + " inter neurons | " + b.getNumSynapses() + " total synapses");
 
-        Set<SenseNeuron> senses = new HashSet(b.getSense());
-        Set<MotorNeuron> motors = new HashSet(b.getMotor());
+        Set<InputNeuron> senses = new HashSet(b.getInputs());
+        Set<OutputNeuron> motors = new HashSet(b.getOutputs());
         
         for (InterNeuron i : b.getInter()) {
-            MotorNeuron mn = i.motor;
+            OutputNeuron mn = i.motor;
             if (mn!=null) 
                 motors.remove(mn);            
         }
         
         for (CritterdingSynapse s : b.getSynapses()) {
             CritterdingNeuron n = s.source;
-            if (n instanceof SenseNeuron) {
+            if (n instanceof InputNeuron) {
                 senses.remove(n);
             }                    
         }

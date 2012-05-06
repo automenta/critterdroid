@@ -15,4 +15,5 @@ public interface CritterdingNeuron extends Neuron {
 
     public double getOutput();
     
+    
 }

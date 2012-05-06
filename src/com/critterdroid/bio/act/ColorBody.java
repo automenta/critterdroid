@@ -7,13 +7,13 @@ package com.critterdroid.bio.act;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.critterdroid.bio.Material;
-import jcog.critterding.MotorNeuron;
+import jcog.critterding.OutputNeuron;
 
 /**
  *
  * @author seh
  */
-public class ColorBody extends MotorNeuron {
+public class ColorBody extends OutputNeuron {
     private Material material;
     private final int index;
     private final float delta;

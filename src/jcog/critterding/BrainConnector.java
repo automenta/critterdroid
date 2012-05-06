@@ -13,15 +13,15 @@ public class BrainConnector {
     public void addConnection(CritterdingBrain a, CritterdingBrain b, int width) {
 
         for (int w = 0; w < width; w++) {
-            final MotorNeuron bOut = b.newOutput();
-            a.addInput(new SenseNeuron() {
+            final OutputNeuron bOut = b.newOutput();
+            a.addInput(new InputNeuron() {
                 @Override
                 public double getOutput() {
                     return bOut.getOutput();
                 }                               
             });
-            final MotorNeuron aOut = a.newOutput();
-            b.addInput(new SenseNeuron() {
+            final OutputNeuron aOut = a.newOutput();
+            b.addInput(new InputNeuron() {
                 @Override
                 public double getOutput() {
                     return aOut.getOutput();

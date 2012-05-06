@@ -20,7 +20,7 @@ public class NeuronBuilder {
     // motor neuron ability (excititatory only) flag
     //boolean isMotor; //isMotor if motor!=null
     // function
-    MotorNeuron motor;
+    OutputNeuron motor;
     // synaptic plasticity by flag
     boolean isPlastic;
     // factors

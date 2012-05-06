@@ -6,13 +6,13 @@ package com.critterdroid.bio.feel;
 
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.joints.RevoluteJoint;
-import jcog.critterding.SenseNeuron;
+import jcog.critterding.InputNeuron;
 
 /**
  *
  * @author seh
  */
-public class RevoluteJointAngle extends SenseNeuron {
+public class RevoluteJointAngle extends InputNeuron {
     private final RevoluteJoint joint;
 
     public RevoluteJointAngle(RevoluteJoint j) {
