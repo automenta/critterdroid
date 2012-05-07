@@ -72,6 +72,7 @@ import org.lwjgl.opengl.GL11;
  */
 public class App implements ApplicationListener, InputProcessor {
 
+
     
     /**
      * handles the physics
@@ -85,7 +86,7 @@ public class App implements ApplicationListener, InputProcessor {
     private int velocityIterations = 8;
     private int positionIterations = 3;
     
-    float defaultFriction = 0.3f;
+    float defaultFriction = 0.95f;
     float simDT;
     
     /**
@@ -107,6 +108,16 @@ public class App implements ApplicationListener, InputProcessor {
     private Simulation sim;
     
     int numOvalSegments = 7;
+
+    /** brings any angle to within [0, 2*pi] */
+    public static float normalizeAngle(float angle) {
+        float a = angle;
+
+        while (a < 0)
+            a+=Math.PI*2.0;
+
+        return a;                        
+    }
     
     public static void run(Simulation s, String title, int width, int height) {
         LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
@@ -146,6 +157,7 @@ public class App implements ApplicationListener, InputProcessor {
     //private float rotationSpeed;
     private Stage stage;
     private Skin skin;
+    private float defaultRestitution = 0.5f;
     
 
     public App(Simulation s) {
@@ -721,16 +733,17 @@ public class App implements ApplicationListener, InputProcessor {
         
     }
     
-    private Body initBody(BodyDef b, Shape shape, float x, float y, float density, float friction, Color c) {
-        return initBody(b, shape, x, y, density, friction, new Material(c));
+    private Body initBody(BodyDef b, Shape shape, float x, float y, float density, float friction, float restitution, Color c) {
+        return initBody(b, shape, x, y, density, friction, restitution, new Material(c));
     }
     
-    private Body initBody(BodyDef b, Shape shape, float x, float y, float density, float friction, Material m) {
+    private Body initBody(BodyDef b, Shape shape, float x, float y, float density, float friction, float restitution, Material m) {
         //call physicsWorld.createBody to actually make the body
         Body body = world.createBody(b);
 
         Fixture f = body.createFixture(shape, density);
         f.setFriction(friction);
+        f.setRestitution(restitution);
         f.setUserData(m);
 
         //put the body and image together
@@ -744,8 +757,7 @@ public class App implements ApplicationListener, InputProcessor {
         //ball.setOffset(-ballImage.getWidth()/2, -ballImage.getWidth()/2);
         return body;
     }
-
-    public Body newRectangle(float w, float h, final float x, final float y, float angle, float density, Material m) {
+    public Body newRectangle(float w, float h, final float x, final float y, float angle, float density, float friction, float restitution, Material m) {
         PolygonShape s = new PolygonShape();
         s.setAsBox(w / 2.0f, h / 2.0f, new Vector2(0, 0), angle);
         
@@ -753,10 +765,14 @@ public class App implements ApplicationListener, InputProcessor {
         BodyDef b = new BodyDef();
         b.type = BodyType.DynamicBody;
 
-        return initBody(b, s, x, y, density, defaultFriction, m);
+        return initBody(b, s, x, y, density, defaultFriction, restitution, m);        
     }
 
-    public Body newCircle(float radius, float x, float y, float density, Material m) {
+    public Body newRectangle(float w, float h, final float x, final float y, float angle, float density, Material m) {
+        return newRectangle(w, h, x, y, angle, density, defaultFriction,defaultRestitution,  m);
+    }
+
+    public Body newCircle(float radius, float x, float y, float density, float friction, float restitution, Material m) {
         //create a shape for the ball
         CircleShape circle = new CircleShape();
         circle.setPosition(new Vector2(0, 0));
@@ -764,15 +780,19 @@ public class App implements ApplicationListener, InputProcessor {
 
         //make a bodyDef, and make it dynamic so it actually moves
         BodyDef ballDef = new BodyDef();
-        ballDef.type = BodyType.DynamicBody;
+        ballDef.type = BodyType.DynamicBody;        
 
-        return initBody(ballDef, circle, x, y, density, defaultFriction, m);
+        return initBody(ballDef, circle, x, y, density, friction, restitution, m);        
+    }
+    
+    public Body newCircle(float radius, float x, float y, float density, Material m) {
+        return newCircle(radius, x, y, density, defaultFriction, defaultRestitution, m);
     }
 
     public RevoluteJoint joinRevolute(Body a, Body b, float x, float y) {
         RevoluteJointDef jd = new RevoluteJointDef();
         jd.initialize(a, b, new Vector2(x, y));
-        jd.collideConnected = false;
+        jd.collideConnected = true;
         jd.enableMotor = true;
         jd.enableLimit = true;
         jd.lowerAngle = -0.001f;

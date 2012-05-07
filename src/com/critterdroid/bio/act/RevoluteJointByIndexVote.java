@@ -12,7 +12,7 @@ import jcog.critterding.OutputNeuron;
  *
  * @author seh
  */
-public class ServoRevoluteJoint  {
+public class RevoluteJointByIndexVote  {
     private final RevoluteJoint joint;
     
     private float wiggle = 0.01f;
@@ -21,26 +21,28 @@ public class ServoRevoluteJoint  {
     
     float dr = 0;
     private final float range;
-    private final float dt;
-    float stepActivation[];
-    private final int steps;
+    protected final float dt;
+    protected float stepActivation[];
+    protected final int steps;
 
-    float stepMomentum = 0.5f;
-    float rotationMomentum = 0.7f;
+    float stepMomentum = 0.95f;
+    float rotationMomentum = 0.05f;
+    float motorSpeed = 15f;
     
-    private final float angleFrom;
+    protected final float angleFrom;
     private float lastAngle;
     
     int best=0;
     
-    public ServoRevoluteJoint(Brain b, RevoluteJoint rj, float angleFrom, float angleTo, int steps) {
+    public RevoluteJointByIndexVote(Brain b, RevoluteJoint rj, float angleFrom, float angleTo, int steps) {
         super();
         
         this.joint = rj;
 
         joint.enableLimit(true);
         joint.enableMotor(true);
-        
+
+        joint.setMotorSpeed(motorSpeed);
         joint.setMaxMotorTorque(maxTorque);        
 
 
@@ -65,8 +67,8 @@ public class ServoRevoluteJoint  {
                 @Override
                 public void tick() {
                     super.tick();
-                    if (ii == ServoRevoluteJoint.this.steps - 1) {
-                       ServoRevoluteJoint.this.tick();
+                    if (ii == RevoluteJointByIndexVote.this.steps - 1) {
+                       RevoluteJointByIndexVote.this.tick();
                     }
                 }
                                 
@@ -77,9 +79,7 @@ public class ServoRevoluteJoint  {
     }
 
     public void fire(int step) {
-        stepActivation[step] += 1.0f;
-        
-        
+        stepActivation[step] = Math.min(stepActivation[step]+1.0f, 1.0f);        
     }
     
     public void tick() {
@@ -120,6 +120,7 @@ public class ServoRevoluteJoint  {
         }
         //System.out.println(" " + lower + " " + higher);
                 
+        
         joint.setLimits(lower, higher);
         //joint.setMotorSpeed(joint.getMotorSpeed() + factor);
         

@@ -13,7 +13,7 @@ import jcog.critterding.InputNeuron;
  *
  * @author me
  */
-public abstract class Brain {
+public abstract class Brain /* extends AbstractLocalBrain<SenseNeuron, MotorNeuron, CritterdingNeuron, SimpleSynapse<CritterdingNeuron>>*/ {
     final protected List<InputNeuron> sense = new ArrayList();
     final protected List<OutputNeuron> motor = new ArrayList();
     double percentChanceMotorNeuron; //    // percent chance that when adding a new random neuron, it has a motor function

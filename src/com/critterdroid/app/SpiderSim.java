@@ -15,7 +15,7 @@ import com.badlogic.gdx.physics.box2d.joints.RevoluteJoint;
 import com.badlogic.gdx.scenes.scene2d.ui.Window;
 import com.critterdroid.bio.Material;
 import com.critterdroid.bio.Simulation;
-import com.critterdroid.bio.act.ServoRevoluteJoint;
+import com.critterdroid.bio.act.RevoluteJointByIndexVote;
 import com.critterdroid.bio.act.ColorBodyTowards;
 import com.critterdroid.bio.act.Thruster;
 import com.critterdroid.bio.brain.BrainWiring;
@@ -101,7 +101,7 @@ public class SpiderSim implements Simulation {
                 float ry = (float)(y + Math.sin(angle) * (dr-al/2.0f));
                 final RevoluteJoint j = sim.joinRevolute(arm[i], prev, rx, ry);
 
-                new ServoRevoluteJoint(brain, j, -servoRange, servoRange, servoSteps);
+                new RevoluteJointByIndexVote(brain, j, -servoRange, servoRange, servoSteps);
 
                 new QuantizedScalarInput(brain, 4) {
                     @Override public float getValue() {

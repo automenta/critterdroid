@@ -4,7 +4,12 @@ package jcog.critterding;
 public class OutputNeuron implements CritterdingNeuron, com.syncleus.dann.neural.OutputNeuron {
     private boolean firing;
 
-    public void setFiring(boolean f) {
+    /**
+     * 
+     * @param f
+     * @return  whether changed
+     */
+    public boolean setFiring(boolean f) {
         if (firing!=f) {
             firing = f;
 
@@ -13,8 +18,11 @@ public class OutputNeuron implements CritterdingNeuron, com.syncleus.dann.neural
             else
                 onFired();
             
+            return true;
         }
+        return false;
     }
+    
     @Override
     public double getOutput() {
         return firing ? 1.0 : 0.0;

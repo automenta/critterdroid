@@ -5,19 +5,38 @@
 package com.critterdroid.bio.brain;
 
 import java.io.*;
+import jcog.critterding.OutputNeuron;
 
 /**
  * High-performance interface to BECCA cognition engine ( http://openbecca.org )
  * which runs on python 2.7 + numpy 1.6 
  * @author me
  */
-abstract public class BeccaBrain extends Brain {
+public class BeccaBrain extends Brain {
     private Process proc;
     private PrintStream oo;
     private BufferedReader oi;
-
+    private RewardFunction rewardFunction = null;
+    private float lastReward = 0;
+    private int outputChangeMagnitude = 0;
+    
     public BeccaBrain() {
         this(0, 0);        
+    }
+
+    public float getLastReward() {
+        return lastReward;
+    }
+
+    /** number of outputs that changed from last cycle */
+    public float getOutputChangeMagnitude() {
+        if (getNumOutputs() > 0)
+            return ((float)outputChangeMagnitude) / ((float)getNumOutputs());
+        return 0;
+    }
+    
+    public static interface RewardFunction {
+        public float getReward();
     }
     
     public BeccaBrain(final int numInputs, final int numOutputs) {
@@ -28,8 +47,17 @@ abstract public class BeccaBrain extends Brain {
             newOutput();
         
     }
+
+    public void setRewardFunction(RewardFunction rewardFunction) {
+        this.rewardFunction = rewardFunction;
+    }
+
+    public RewardFunction getRewardFunction() {
+        return rewardFunction;
+    }
     
-    public void init(float featureMultiplier) {
+    public void init(float featureMultiplier, RewardFunction initialRewardFunction) {
+        setRewardFunction(initialRewardFunction);
         
         int numFeatures = (int)Math.ceil(featureMultiplier * ( getNumInputs() + getNumOutputs() ));
         
@@ -64,6 +92,12 @@ abstract public class BeccaBrain extends Brain {
         }
     }
 
+    public float getReward() {
+        if (rewardFunction!=null)
+            return lastReward = rewardFunction.getReward();
+        
+        return lastReward = 0f;
+    }
     
     @Override
     public void forward() {
@@ -84,27 +118,28 @@ abstract public class BeccaBrain extends Brain {
         
         String[] results = result.split(" ");
         
-        
-        for (int i = 0; i < getNumOutputs(); i++)
-            getOutput(i).setFiring( Float.parseFloat(results[i]) > 0  );
+        outputChangeMagnitude = 0;
+        for (int i = 0; i < getNumOutputs(); i++) {
+            boolean nextFire = Float.parseFloat(results[i]) > 0;
+            
+            final OutputNeuron on = getOutput(i);
+            if (on.setFiring( nextFire   ))
+                outputChangeMagnitude++;
+        }
                 
         
     }
 
-    public abstract float getReward();
-
     
     public static void main(String[] args) throws Exception {
-        BeccaBrain b = new BeccaBrain(7, 7) {
-
+        BeccaBrain b = new BeccaBrain(7, 7) ;
+        
+        b.init(2, new RewardFunction() {
             @Override
             public float getReward() {
                 return (float)Math.random();
             }
-            
-        };
-        
-        b.init(2);
+        });
         
         for (int i = 0; i < 9; i++) {
             b.forward();

@@ -15,11 +15,12 @@ import com.badlogic.gdx.physics.box2d.joints.RevoluteJoint;
 import com.badlogic.gdx.scenes.scene2d.ui.Window;
 import com.critterdroid.bio.Material;
 import com.critterdroid.bio.Simulation;
-import com.critterdroid.bio.act.ServoRevoluteJoint;
 import com.critterdroid.bio.act.ColorBodyTowards;
+import com.critterdroid.bio.act.RevoluteJointByTotalActivation;
 import com.critterdroid.bio.act.Spinner;
 import com.critterdroid.bio.act.Thruster;
 import com.critterdroid.bio.brain.BeccaBrain;
+import com.critterdroid.bio.brain.BeccaBrain.RewardFunction;
 import com.critterdroid.bio.feel.Retina;
 import com.critterdroid.entities.Critter;
 import com.critterdroid.simulation.App;
@@ -35,23 +36,21 @@ public class BeccaSpiderSim implements Simulation {
     private App sim;
 
     List<Body> blocks = new LinkedList();
+    List<Body> food = new LinkedList();
     
     public class Spider extends Critter {
-//        float armLength = 0.65f;
-//        float armWidth = 0.30f;
-        float armLength = 0.65f/2f;
-        float armWidth = 0.30f/2f;
+        float armLength = 0.4f;
+        float armWidth = 0.25f;
 
         int arms;
         int armSegments;
 
-        float torsoRadius = 0.4f;
+        float torsoRadius = 0.25f;
         
-        float servoRange = ((float)Math.PI / 2.0f) * 1.5f; //0.9f;
-        int servoSteps = 3;
+        float servoRange = ((float)Math.PI / 2.0f) * 0.7f;
+        int servoSteps = 8;
         
-        int numRetinasPerSegment = 4;
-        int numThrustersPerTorso = 4;
+        int numThrustersPerTorso = 16;
         int retinaLevels = 1;
         
         final int velocityLevels = 1;
@@ -64,12 +63,14 @@ public class BeccaSpiderSim implements Simulation {
                 
         public final BeccaBrain brain;
         List<Retina> retinas = new LinkedList();
+        List<Thruster> thrusters = new LinkedList();
         private final float ix;
         private final float iy;
         private final Color color;
         private final Material m;
         private App sim;
         private Body torso;
+        private List<Body> bodies = new LinkedList();
 
         public Spider(int arms, int armSegments, float armSegmentExponent, float ix, float iy, Color c) {
             super();
@@ -81,72 +82,46 @@ public class BeccaSpiderSim implements Simulation {
             this.color = c;
             m = new Material(color, Color.DARK_GRAY, 2);
             
-            brain = new BeccaBrain() {
-                float lx, ly;
-                float maxDist = 0.2f;
-                
-
-                @Override
-                public void init(float m) {
-                    super.init(m);
-                    
-                    lx = torso.getWorldCenter().x;
-                    ly = torso.getWorldCenter().y;
-                }
-                
-                
-                @Override
-                public float getReward() {
-                    float x = torso.getWorldCenter().x;
-                    float y = torso.getWorldCenter().y;
-                    
-                    float distMoved = (float) Math.sqrt( (x - lx) * (x - lx) /* + (y - ly) * (y - ly) */ ) / maxDist;
-                    
-                    lx = x;
-                    ly = y;
-                    
-                    float avgDistToBlocks = 0;
-                    for (Body b : blocks) {
-                        avgDistToBlocks += b.getWorldCenter().dst(torso.getWorldCenter());
-                    }
-                    avgDistToBlocks /= blocks.size();
-                    avgDistToBlocks = 1f / (float)Math.sqrt(avgDistToBlocks);
-                    
-                    System.out.println("distMoved=" + distMoved);
-                    System.out.println("avgDistToBlocks=" + avgDistToBlocks);
-                    
-                    distMoved *= 0.5f;
-                    distMoved *= 0;
-                    
-                    float reward = Math.max(0f, Math.min(1.0f, distMoved + avgDistToBlocks));
-                    System.out.println("  reward=" + reward);
-                    return reward;
-                }
-                
-            };
+            brain = new BeccaBrain();
         }
- 
-        public void addArm(Body base, float x, float y, float angle, int armSegments, float armLength, float armWidth) {
+
+        Vector2 worldCenter = new Vector2();
+        
+        public Vector2 getWorldCenter() {
+            worldCenter.set(0,0);
+            if (!bodies.isEmpty()) {
+                for (Body b : bodies) {
+                    worldCenter.add(b.getWorldCenter());
+                }
+                float m = 1.0f / ((float)bodies.size());
+                worldCenter.set(worldCenter.x * m, worldCenter.y * m);
+            }
+            return worldCenter;
+        }
+        
+        public void addArm(Body base, float x, float y, float angle, int armSegments, float armLength, float armWidth, int level, int maxLevel) {
             Body[] arm = new Body[armSegments];
                         
             Body prev = base;
             
             double dr = getArmLength(armLength, 0)/2.0;
+            float ax=0, ay=0, al=0, aw=0;
             
             for (int i = 0; i < armSegments; i++) {
                                 
-                float al = getArmLength(armLength, i);
-                float aw = getArmWidth(armWidth, i);
+                al = getArmLength(armLength, i);
+                aw = getArmWidth(armWidth, i);
                                 
-                float ax = (float)(x + Math.cos(angle) * dr);
-                float ay = (float)(y + Math.sin(angle) * dr);
+                ax = (float)(x + Math.cos(angle) * dr);
+                ay = (float)(y + Math.sin(angle) * dr);
                 final Body b = arm[i] = sim.newRectangle(al, aw, ax, ay, angle, 1.0f, m);
+                bodies.add(b);
                 
                 float rx = (float)(x + Math.cos(angle) * (dr-al/2.0f));
                 float ry = (float)(y + Math.sin(angle) * (dr-al/2.0f));
                 final RevoluteJoint j = sim.joinRevolute(arm[i], prev, rx, ry);
 
-                new ServoRevoluteJoint(brain, j, -servoRange, servoRange, servoSteps);
+                new RevoluteJointByTotalActivation(brain, j, -servoRange, servoRange, servoSteps);
 
                 new QuantizedScalarInput(brain, 4) {
                     @Override public float getValue() {
@@ -171,18 +146,18 @@ public class BeccaSpiderSim implements Simulation {
                             return Math.max(0, yy/zl);
                         }  
                     };
-            }
+                    
+                    new QuantizedScalarInput(brain, velocityLevels) {
+                        @Override public float getValue() {
+                            final float maxRadsPerSecond = 2.0f; //n cycles per second is the max velocity before maxing out the signal input
+                            return Math.min(1.0f, Math.max(0, f * b.getAngularVelocity() / (maxRadsPerSecond * (float)(2.0 * Math.PI))));
+                        }                    
+                    };
+                }
                         
                 new QuantizedScalarInput(brain, orientationLevels) {
                     @Override public float getValue() {
-                        float a = b.getAngle();
-                        if (a < 0) a+=Math.PI*2.0;
-                        return a / (float)(2.0 * Math.PI);
-                    }                    
-                };
-                new QuantizedScalarInput(brain, velocityLevels) {
-                    @Override public float getValue() {
-                        return b.getAngularVelocity() / (float)(2.0 * Math.PI);
+                        return App.normalizeAngle(b.getAngle()) / (float)(2.0 * Math.PI);
                     }                    
                 };
                 
@@ -196,10 +171,15 @@ public class BeccaSpiderSim implements Simulation {
                 brain.addOutput(new ColorBodyTowards(b, color, 0.95f));
                 brain.addOutput(new ColorBodyTowards(b, new Color(color.r * 0.5f, color.g * 0.5f, color.b * 0.5f, color.a * 0.25f), 0.95f));
 
-                int n = numRetinasPerSegment;
+                int n = getNumRetinas(i, level, maxLevel );
                 for (float z = 0; z < n; z++) {
 
-                    float a = z * (float)(Math.PI*2.0 / ((float)n));
+                    float a = 
+                            (i == armSegments-1) ? 
+                            z * (float)(Math.PI*1.0 / ((float)n)) + (float)(Math.PI*1.5) + angle
+                            :
+                            z * (float)(Math.PI*2.0 / ((float)n)) + (float)(Math.PI*0.25) + angle;
+                    
                     retinas.add(new Retina(brain, b, new Vector2(0, 0), a, (float)initialVisionDistance, retinaLevels));
                 }
                 //TODO Retina.newVector(...)
@@ -208,10 +188,31 @@ public class BeccaSpiderSim implements Simulation {
                 dr += al * 0.9f;
                 
                 prev = arm[i];
+                
+            }
+            if (level!=maxLevel) {
+                int nextArmSegments = armSegments / 2;
+                float nextArmWidth = aw * 0.618f;
+                float nextArmLength = al * 0.618f;
+                if (nextArmSegments == 0) {
+                    nextArmSegments = 1;
+                }
+                
+                float aa = angle - 0.3f;
+                for (int i = 0; i < 2; i++) {                
+                    
+                    float tax = ax + (float)Math.cos(aa) * al/1.2f;
+                    float tay = ay + (float)Math.sin(aa) * al/1.2f;
+                    addArm(prev, tax, tay, aa, nextArmSegments, nextArmLength, nextArmWidth, level+1, maxLevel);
+                    
+                    aa += 0.6f;
+                }
+                
             }
             
             
         }
+        
         
         @Override
         public void init(App s) {
@@ -219,20 +220,19 @@ public class BeccaSpiderSim implements Simulation {
             this.sim = s;
             
             torso = sim.newCircle(torsoRadius, ix, iy, 0.5f, m);            
-            torso.setAngularDamping(0.7f);
-            torso.setLinearDamping(0.7f);
+            bodies.add(torso);
 
             float da = (float)((Math.PI*2.0)/arms);
             float a = 0;
             for (int i = 0; i < arms; i++) {
                 float ax = (float)(ix + (Math.cos(a) * torsoRadius));
                 float ay = (float)(iy + (Math.sin(a) * torsoRadius));
-                addArm(torso, ax, ay, a, armSegments, armLength, armWidth);
+                addArm(torso, ax, ay, a, armSegments, armLength, armWidth, 0, 0);
                 a += da;
             }
 
             //base's eyes
-            int n = numRetinasPerSegment;
+            int n = getNumRetinaTorso();
             for (float z = 0; z < n; z++) {
 
                 float ba = z * (float)(Math.PI*2.0 / ((float)n));
@@ -242,7 +242,9 @@ public class BeccaSpiderSim implements Simulation {
             n = numThrustersPerTorso;
             for (float z = 0; z < n; z++) {
                 float ba = z * (float)(Math.PI*2.0 / ((float)n));
-                //brain.addOutput(new Thruster(torso, ba));
+                Thruster t;
+                brain.addOutput(t = new Thruster(torso, ba));
+                thrusters.add(t);
             }
             
             
@@ -251,7 +253,29 @@ public class BeccaSpiderSim implements Simulation {
 
             
 
-            brain.init( 2.5f );
+            brain.init( 3.1f, new RewardFunction() {
+
+                @Override
+                public float getReward() {
+                    //1. weighted "closeness" to food particles
+                    //2. remaining energy
+                    
+                    float remainingEnergy = 0;
+                    
+                    final Vector2 center = getWorldCenter();
+                    
+                    float weightedCloseness = 0;                    
+                    for (Body b : food) {
+                        weightedCloseness += 1.0f / (1 + center.dst(b.getWorldCenter()));                        
+                    }
+                    weightedCloseness/=food.size();
+                    
+                    float movementCost = brain.getOutputChangeMagnitude();
+                    
+                    return weightedCloseness + remainingEnergy - movementCost;
+                }               
+                 
+            });
             
         }
         
@@ -271,6 +295,10 @@ public class BeccaSpiderSim implements Simulation {
 
         @Override
         public void renderUnderlay(Graphics g) {
+            System.out.println("reward: " + brain.getLastReward());
+//            float rs = brain.getLastReward();
+//            CharSequence t = ((Label) sim.getStage().findActor("label")).getText();
+//            ((Label) sim.getStage().findActor("label")).setText(t + " reward=" + rs );
 
             for (Retina r : retinas) {
                 r.draw();
@@ -279,6 +307,9 @@ public class BeccaSpiderSim implements Simulation {
 
         @Override
         public void renderOverlay(Graphics g) {
+            for (Thruster t : thrusters) {
+                t.draw(sim);
+            }
         }
 
         public void setVisionDistance(float v) {
@@ -299,7 +330,7 @@ public class BeccaSpiderSim implements Simulation {
         }
 
         public ParameterPanel newParameterPanel() {
-            ParameterPanel sp = new ParameterPanel(sim.getSkin(), 300, 400);
+            ParameterPanel sp = new ParameterPanel(sim.getSkin(), 300, 300);
 //            sp.addSlider("Memory Factor", 0, 10.0f, 0.999f, new SliderListener() {
 //
 //                @Override
@@ -359,6 +390,16 @@ public class BeccaSpiderSim implements Simulation {
             sp.pack();
             return sp;
         }
+
+        private int getNumRetinaTorso() {
+            return 32;
+        }
+        private int getNumRetinas(int segment, int level, int maxLevels) {
+            if ((segment == armSegments - 1) && (level == maxLevels)) {
+                return 12;
+            }
+            return 4;
+        }
         
     }
     
@@ -384,12 +425,12 @@ public class BeccaSpiderSim implements Simulation {
         
         World world = app.world;
         
-        world.setGravity(new Vector2(0, 5.8f));
+        world.setGravity(new Vector2(0, 9.8f));
 
         Spacegraph.addWorldBox(app, world, 16f, 7f, 0.1f);
         
         Spider r;
-        app.addCritter(r = new Spider(1, 5, 0.618f, 0, 0, new Color(0.4f, 0.9f, 1.0f, 0.8f)));
+        app.addCritter(r = new Spider(2, 3, 0.618f, 0, 0, new Color(0.8f, 0.4f, 0.8f, 0.9f)));
         addControls("Spider", app, r);
 
 //        Spider snake = new Spider(1, 12, 0.9f, -4, -1, new Color(0.1f, 0.6f, 0.7f, 0.8f), new RandomWiring(2048, 1, 4, 0.5f, 0.2f));
@@ -403,15 +444,26 @@ public class BeccaSpiderSim implements Simulation {
         
         for (int i = 0; i < 8; i++) {
             Material m = new Material(Color.ORANGE, new Color(1.0f, 0.9f, 0, 0.5f), 3);
-            addCircleRock(app, 2f, -2f+i*0.3f, 0.1f + ((float)Math.random()) * 0.15f, m);
+            addBlock(app, 2f, -2f+i*0.3f, 0.1f + ((float)Math.random()) * 0.95f, m);
         }
 
+        for (int i = 0; i < 4; i++) {
+            Material m = new Material(new Color(0.15f, 0.75f, 0.45f, 0.75f), new Color(0.1f, 0.5f, 0.1f, 0.15f), 1);
+            addFood(app, 1f+i*0.2f, -3f, 0.1f + ((float)Math.random()) * 0.1f, m);
+        }
         
     }
     
-    public void addCircleRock(App sim, float x, float y, float r, Material m) {
+    public void addBlock(App sim, float x, float y, float r, Material m) {
         //blocks.add( sim.newCircle(r, x, y, 1.0f, m) );
-        blocks.add( sim.newRectangle(r, r*0.618f, x, y, 0, 1.0f, m) );
+        blocks.add( sim.newRectangle(r, r*0.618f, x, y, 0, 10.0f, m) );
+    }
+    public void addFood(App sim, float x, float y, float r, Material m) {
+        //blocks.add( sim.newCircle(r, x, y, 1.0f, m) );
+        Body f = sim.newCircle(r, x, y, 1.0f, 0f, 0.95f, m);
+        f.setGravityScale(0);
+        f.setLinearDamping(0.9f);
+        food.add( f );
     }
     
 //        public void addRectRock(App sim, float x, float y, float r, Color c) {

@@ -16,7 +16,7 @@ import jcog.math.RandomNumber;
 /**
  * java port of critterding's BRAINZ system
  */
-public class CritterdingBrain extends Brain /*extends AbstractLocalBrain<SenseNeuron, MotorNeuron, CritterdingNeuron, SimpleSynapse<CritterdingNeuron>>*/ {
+public class CritterdingBrain extends Brain  {
     public final Map<CritterdingNeuron, CritterdingSynapse[]> neuronSynapses = new HashMap();
     public final List<CritterdingSynapse> synapses = new LinkedList();
     final List<InterNeuron> neuron = new ArrayList();

@@ -103,6 +103,9 @@ public class Retina implements RayCastCallback {
     public void update() {
         clear();
 
+        if (maxDistance<=0)
+            return;
+        
         p1.set(body.getWorldPoint(offset));
         offsetX.set(offset.x + (float) Math.cos(angle) * maxDistance, offset.y + (float) Math.sin(angle) * maxDistance);
         p2.set(body.getWorldPoint(offsetX));
