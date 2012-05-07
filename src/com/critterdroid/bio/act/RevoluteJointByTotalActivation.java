@@ -21,12 +21,14 @@ public class RevoluteJointByTotalActivation extends RevoluteJointByIndexVote {
     @Override public void tick() {
         float left = 0;
         float right = 0;
+        float s = 1.0f;
         for (int k = 0; k < steps; k++) {
             int i = k / 2;
             if (k%2 == 0)
-                left += stepActivation[k];
+                left += stepActivation[k] * s;
             else
-                right += stepActivation[k];
+                right += stepActivation[k] * s;
+            s/=2f;
         }
         float m = Math.max(left, right);
         float target = 0;

@@ -17,7 +17,6 @@ import com.critterdroid.bio.Material;
 import com.critterdroid.bio.Simulation;
 import com.critterdroid.bio.act.ColorBodyTowards;
 import com.critterdroid.bio.act.RevoluteJointByTotalActivation;
-import com.critterdroid.bio.act.Spinner;
 import com.critterdroid.bio.act.Thruster;
 import com.critterdroid.bio.brain.BeccaBrain;
 import com.critterdroid.bio.brain.BeccaBrain.RewardFunction;
@@ -48,7 +47,7 @@ public class BeccaSpiderSim implements Simulation {
         float torsoRadius = 0.25f;
         
         float servoRange = ((float)Math.PI / 2.0f) * 0.7f;
-        int servoSteps = 8;
+        int servoSteps = 2;
         
         int numThrustersPerTorso = 16;
         int retinaLevels = 1;
@@ -59,6 +58,9 @@ public class BeccaSpiderSim implements Simulation {
         
         double initialVisionDistance = 10.0;
 
+            final float absPositionScale = 10.0f;
+            
+        
         float armSegmentExponent;
                 
         public final BeccaBrain brain;
@@ -123,9 +125,9 @@ public class BeccaSpiderSim implements Simulation {
 
                 new RevoluteJointByTotalActivation(brain, j, -servoRange, servoRange, servoSteps);
 
-                new QuantizedScalarInput(brain, 4) {
+                new QuantizedScalarInput(brain, 1) {
                     @Override public float getValue() {
-                        return j.getJointAngle()/(float)(Math.PI*2.0f);
+                        return App.normalizeAngle(j.getJointAngle())/(float)(Math.PI*2.0f);
                     }  
                 };
                 for (float ff = -1; ff<=1; ff+=2.0f ) {
@@ -219,7 +221,9 @@ public class BeccaSpiderSim implements Simulation {
 
             this.sim = s;
             
-            torso = sim.newCircle(torsoRadius, ix, iy, 0.5f, m);            
+            torso = sim.newCircle(torsoRadius, ix, iy, 3f, m);            
+            torso.setAngularDamping(0.8f);
+            torso.setLinearDamping(0.8f);
             bodies.add(torso);
 
             float da = (float)((Math.PI*2.0)/arms);
@@ -239,6 +243,24 @@ public class BeccaSpiderSim implements Simulation {
                 retinas.add(new Retina(brain, torso, new Vector2(0, 0), ba, (float)initialVisionDistance, retinaLevels));
                 
             }
+            new QuantizedScalarInput(brain, orientationLevels) {
+                @Override public float getValue() {
+                    return App.normalizeAngle(torso.getAngle()) / (float)(2.0 * Math.PI);
+                }                    
+            };
+            
+            new QuantizedScalarInput(brain, 1) {
+                @Override public float getValue() {
+                    return torso.getWorldCenter().x / absPositionScale;
+                }                    
+            };
+            new QuantizedScalarInput(brain, 1) {
+                @Override public float getValue() {
+                    return torso.getWorldCenter().y / absPositionScale;
+                }                    
+            };
+            
+            
             n = numThrustersPerTorso;
             for (float z = 0; z < n; z++) {
                 float ba = z * (float)(Math.PI*2.0 / ((float)n));
@@ -253,7 +275,7 @@ public class BeccaSpiderSim implements Simulation {
 
             
 
-            brain.init( 3.1f, new RewardFunction() {
+            brain.init( 6.0f, new RewardFunction() {
 
                 @Override
                 public float getReward() {
@@ -425,12 +447,12 @@ public class BeccaSpiderSim implements Simulation {
         
         World world = app.world;
         
-        world.setGravity(new Vector2(0, 9.8f));
+        world.setGravity(new Vector2(0, 0f));
 
-        Spacegraph.addWorldBox(app, world, 16f, 7f, 0.1f);
+        Spacegraph.addWorldBox(app, world, 12f, 7f, 0.15f);
         
         Spider r;
-        app.addCritter(r = new Spider(2, 3, 0.618f, 0, 0, new Color(0.8f, 0.4f, 0.8f, 0.9f)));
+        app.addCritter(r = new Spider(2, 5, 0.618f, 0, 0, new Color(0.9f, 0.4f, 0.8f, 0.9f)));
         addControls("Spider", app, r);
 
 //        Spider snake = new Spider(1, 12, 0.9f, -4, -1, new Color(0.1f, 0.6f, 0.7f, 0.8f), new RandomWiring(2048, 1, 4, 0.5f, 0.2f));
@@ -456,13 +478,15 @@ public class BeccaSpiderSim implements Simulation {
     
     public void addBlock(App sim, float x, float y, float r, Material m) {
         //blocks.add( sim.newCircle(r, x, y, 1.0f, m) );
-        blocks.add( sim.newRectangle(r, r*0.618f, x, y, 0, 10.0f, m) );
+        Body f;
+        blocks.add( f = sim.newRectangle(r, r*0.618f, x, y, 0, 10.0f, m) );
+        f.setLinearDamping(0.3f);
+        f.setAngularDamping(0.5f);
     }
     public void addFood(App sim, float x, float y, float r, Material m) {
         //blocks.add( sim.newCircle(r, x, y, 1.0f, m) );
         Body f = sim.newCircle(r, x, y, 1.0f, 0f, 0.95f, m);
-        f.setGravityScale(0);
-        f.setLinearDamping(0.9f);
+        f.setLinearDamping(0.3f);
         food.add( f );
     }
     
