@@ -36,6 +36,7 @@ public class BeccaSpiderSim implements Simulation {
 
     List<Body> blocks = new LinkedList();
     List<Body> food = new LinkedList();
+    final float worldSize = 3.0f;
     
     public class Spider extends Critter {
         float armLength = 0.4f;
@@ -49,16 +50,18 @@ public class BeccaSpiderSim implements Simulation {
         float servoRange = ((float)Math.PI / 2.0f) * 0.7f;
         int servoSteps = 2;
         
-        int numThrustersPerTorso = 16;
+        float thrusterForce = 25f;
+        
+        int numThrustersPerTorso = 4;
         int retinaLevels = 1;
         
-        final int velocityLevels = 1;
+        final int velocityLevels = 3;
+        final int positionLevels = 3;
 
         int orientationLevels = 1;
         
-        double initialVisionDistance = 10.0;
+        double initialVisionDistance = worldSize*(2f/3f);
 
-            final float absPositionScale = 10.0f;
             
         
         float armSegmentExponent;
@@ -130,38 +133,8 @@ public class BeccaSpiderSim implements Simulation {
                         return App.normalizeAngle(j.getJointAngle())/(float)(Math.PI*2.0f);
                     }  
                 };
-                for (float ff = -1; ff<=1; ff+=2.0f ) {
-                    final float f = ff;
-                    new QuantizedScalarInput(brain, velocityLevels) {
-                        @Override public float getValue() {
-                            final float zl = b.getLinearVelocity().len();
-                            if (zl == 0) return 0;
-                            float xx = b.getLinearVelocity().x * f;
-                            return Math.max(0, xx/zl);
-                        }  
-                    };
-                    new QuantizedScalarInput(brain, velocityLevels) {
-                        @Override public float getValue() {
-                            final float zl = b.getLinearVelocity().len();
-                            if (zl == 0) return 0;
-                            float yy = b.getLinearVelocity().y * f;
-                            return Math.max(0, yy/zl);
-                        }  
-                    };
-                    
-                    new QuantizedScalarInput(brain, velocityLevels) {
-                        @Override public float getValue() {
-                            final float maxRadsPerSecond = 2.0f; //n cycles per second is the max velocity before maxing out the signal input
-                            return Math.min(1.0f, Math.max(0, f * b.getAngularVelocity() / (maxRadsPerSecond * (float)(2.0 * Math.PI))));
-                        }                    
-                    };
-                }
+                addVelocities(b, true, true, true, true);
                         
-                new QuantizedScalarInput(brain, orientationLevels) {
-                    @Override public float getValue() {
-                        return App.normalizeAngle(b.getAngle()) / (float)(2.0 * Math.PI);
-                    }                    
-                };
                 
                 //DEPRECATED
                 //brain.addInput(new RevoluteJointAngle(j));                
@@ -240,32 +213,17 @@ public class BeccaSpiderSim implements Simulation {
             for (float z = 0; z < n; z++) {
 
                 float ba = z * (float)(Math.PI*2.0 / ((float)n));
-                retinas.add(new Retina(brain, torso, new Vector2(0, 0), ba, (float)initialVisionDistance, retinaLevels));
+                retinas.add(new Retina(brain, torso, new Vector2(0, 0), ba, (float)initialVisionDistance, retinaLevels, true));
                 
             }
-            new QuantizedScalarInput(brain, orientationLevels) {
-                @Override public float getValue() {
-                    return App.normalizeAngle(torso.getAngle()) / (float)(2.0 * Math.PI);
-                }                    
-            };
-            
-            new QuantizedScalarInput(brain, 1) {
-                @Override public float getValue() {
-                    return torso.getWorldCenter().x / absPositionScale;
-                }                    
-            };
-            new QuantizedScalarInput(brain, 1) {
-                @Override public float getValue() {
-                    return torso.getWorldCenter().y / absPositionScale;
-                }                    
-            };
-            
+
+            addVelocities(torso, true, false, true, false);
             
             n = numThrustersPerTorso;
             for (float z = 0; z < n; z++) {
                 float ba = z * (float)(Math.PI*2.0 / ((float)n));
                 Thruster t;
-                brain.addOutput(t = new Thruster(torso, ba));
+                brain.addOutput(t = new Thruster(torso, ba, true, thrusterForce));
                 thrusters.add(t);
             }
             
@@ -275,8 +233,10 @@ public class BeccaSpiderSim implements Simulation {
 
             
 
-            brain.init( 6.0f, new RewardFunction() {
+            brain.init(2f, 1, new RewardFunction() {
 
+                final float ws = (float)Math.sqrt(worldSize*worldSize);
+                
                 @Override
                 public float getReward() {
                     //1. weighted "closeness" to food particles
@@ -288,18 +248,23 @@ public class BeccaSpiderSim implements Simulation {
                     
                     float weightedCloseness = 0;                    
                     for (Body b : food) {
-                        weightedCloseness += 1.0f / (1 + center.dst(b.getWorldCenter()));                        
+                        float d = center.dst(b.getWorldCenter())/ws;
+                        weightedCloseness += 1.0f / (1 + d);                        
                     }
                     weightedCloseness/=food.size();
                     
                     float movementCost = brain.getOutputChangeMagnitude();
                     
-                    return weightedCloseness + remainingEnergy - movementCost;
+                    float speed = torso.getLinearVelocity().len()/4f;
+                    
+                    return weightedCloseness*2f-1f; //+ speed; // + remainingEnergy; // - movementCost;
                 }               
                  
             });
             
         }
+        
+        int c = 0;
         
         @Override
         protected void update(double dt) {
@@ -311,6 +276,12 @@ public class BeccaSpiderSim implements Simulation {
             brain.forward();
 
             brain.forwardOutputs();
+            
+            c++;
+
+            if (c%100==0)
+                brain.plots();
+            
 
         }
         
@@ -414,13 +385,66 @@ public class BeccaSpiderSim implements Simulation {
         }
 
         private int getNumRetinaTorso() {
-            return 32;
+            return 16;
         }
         private int getNumRetinas(int segment, int level, int maxLevels) {
             if ((segment == armSegments - 1) && (level == maxLevels)) {
                 return 12;
             }
             return 4;
+        }
+
+        private void addVelocities(final Body b, boolean position, boolean orientation, boolean linearVelocity, boolean angularVelocity ) {
+            for (float ff = -1; ff<=1; ff+=2.0f ) {
+                final float f = ff;
+                if (linearVelocity) {
+                    new QuantizedScalarInput(brain, velocityLevels) {
+                        @Override public float getValue() {
+                            final float zl = b.getLinearVelocity().len();
+                            if (zl == 0) return 0;
+                            float xx = b.getLinearVelocity().x * f;
+                            return Math.min(1,Math.max(0, xx/zl));
+                        }  
+                    };
+                    new QuantizedScalarInput(brain, velocityLevels) {
+                        @Override public float getValue() {
+                            final float zl = b.getLinearVelocity().len();
+                            if (zl == 0) return 0;
+                            float yy = b.getLinearVelocity().y * f;
+                            return Math.min(1, Math.max(0, yy/zl));
+                        }  
+                    };
+                }
+                if (angularVelocity) {
+                    new QuantizedScalarInput(brain, velocityLevels) {
+                        @Override public float getValue() {
+                            final float maxRadsPerSecond = 2.0f; //n cycles per second is the max velocity before maxing out the signal input
+                            return Math.min(1.0f, Math.max(0, f * b.getAngularVelocity() / (maxRadsPerSecond * (float)(2.0 * Math.PI))));
+                        }                    
+                    };
+                }
+                if (position) {
+                    new QuantizedScalarInput(brain, positionLevels) {
+                        @Override public float getValue() {
+                            return Math.max(0, Math.min(1, torso.getWorldCenter().x / worldSize * f));
+                        }                    
+                    };
+                    new QuantizedScalarInput(brain, positionLevels) {
+                        @Override public float getValue() {
+                            return Math.max(0, Math.min(1, torso.getWorldCenter().y / worldSize * f));
+                        }                    
+                    };
+                }
+            if (orientation) {
+                new QuantizedScalarInput(brain, orientationLevels) {
+                    @Override public float getValue() {
+                        return App.normalizeAngle(b.getAngle()) / (float)(2.0 * Math.PI);
+                    }                    
+                };
+            }
+            
+            }
+ 
         }
         
     }
@@ -449,10 +473,10 @@ public class BeccaSpiderSim implements Simulation {
         
         world.setGravity(new Vector2(0, 0f));
 
-        Spacegraph.addWorldBox(app, world, 12f, 7f, 0.15f);
+        Spacegraph.addWorldBox(app, world, worldSize, worldSize, 0.15f);
         
         Spider r;
-        app.addCritter(r = new Spider(2, 5, 0.618f, 0, 0, new Color(0.9f, 0.4f, 0.8f, 0.9f)));
+        app.addCritter(r = new Spider(2, 0, 0.618f, 0, 0, new Color(0.9f, 0.4f, 0.8f, 0.9f)));
         addControls("Spider", app, r);
 
 //        Spider snake = new Spider(1, 12, 0.9f, -4, -1, new Color(0.1f, 0.6f, 0.7f, 0.8f), new RandomWiring(2048, 1, 4, 0.5f, 0.2f));
@@ -464,15 +488,15 @@ public class BeccaSpiderSim implements Simulation {
 //        snake.orientationSteps = 6;
 //        app.addCritter(snake);
         
-        for (int i = 0; i < 8; i++) {
-            Material m = new Material(Color.ORANGE, new Color(1.0f, 0.9f, 0, 0.5f), 3);
-            addBlock(app, 2f, -2f+i*0.3f, 0.1f + ((float)Math.random()) * 0.95f, m);
-        }
+//        for (int i = 0; i < 8; i++) {
+//            Material m = new Material(Color.ORANGE, new Color(1.0f, 0.9f, 0, 0.5f), 3);
+//            addBlock(app, 2f, -2f+i*0.3f, 0.1f + ((float)Math.random()) * 0.95f, m);
+//        }
 
-        for (int i = 0; i < 4; i++) {
+        //for (int i = 0; i < 1; i++) {
             Material m = new Material(new Color(0.15f, 0.75f, 0.45f, 0.75f), new Color(0.1f, 0.5f, 0.1f, 0.15f), 1);
-            addFood(app, 1f+i*0.2f, -3f, 0.1f + ((float)Math.random()) * 0.1f, m);
-        }
+            addFood(app, worldSize/2.5f, worldSize/2.5f, 0.1f + ((float)Math.random()) * 0.1f, m);
+        //}
         
     }
     
@@ -496,6 +520,6 @@ public class BeccaSpiderSim implements Simulation {
     
     
     public static void main(String[] args) {
-        App.run(new BeccaSpiderSim(), "Arm", 1280, 720);
+        App.run(new BeccaSpiderSim(), "OpenBECCA in Critterdroid", 1280, 720);
     }
 }

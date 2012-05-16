@@ -22,7 +22,7 @@ public class Retina implements RayCastCallback {
 
     final public Color c = new Color(0, 0, 0, 1f); //color seen
     private final Body body;
-    private final Vector2 offset;
+    private final Vector2 src;
     private final float angle;
     private final Brain brain;
     final public Vector2 p1 = new Vector2();
@@ -30,6 +30,7 @@ public class Retina implements RayCastCallback {
     final public Vector2 pint = new Vector2();
     private float maxDistance;
     private Material material;
+    private final boolean absolute;
 
     public class RetinaSensor extends InputNeuron {
         private final int channel;
@@ -65,11 +66,16 @@ public class Retina implements RayCastCallback {
     }
     
     public Retina(final Brain brain, Body body, Vector2 offset, float angle, float maxDistance, int levels) {
+        this(brain, body, offset, angle, maxDistance, levels, false);
+        
+    }
+    public Retina(final Brain brain, Body body, Vector2 offset, float angle, float maxDistance, int levels, boolean absolute) {
         super();
 
+        this.absolute = absolute;
         this.body = body;
         this.brain = brain;
-        this.offset = offset;
+        this.src = offset;
         this.angle = angle;
         this.maxDistance = maxDistance;
 
@@ -96,24 +102,35 @@ public class Retina implements RayCastCallback {
        // System.out.println(c + " ->  [" + mappedR + "," + mappedG + "," + mappedB + "]");
     }
     
-    Vector2 offsetX = new Vector2();
+    Vector2 offset = new Vector2();
     Fixture intersected;
     float bestDist;
 
+    public float getAngle() {
+        if (!absolute)
+            return angle;
+        else
+            return angle - body.getAngle();        
+    }
+    
     public void update() {
         clear();
 
         if (maxDistance<=0)
             return;
         
-        p1.set(body.getWorldPoint(offset));
-        offsetX.set(offset.x + (float) Math.cos(angle) * maxDistance, offset.y + (float) Math.sin(angle) * maxDistance);
-        p2.set(body.getWorldPoint(offsetX));
+        float a = getAngle();
+        
+        p1.set(body.getWorldPoint(src));
+        offset.set(src.x + (float) Math.cos(a) * maxDistance, src.y + (float) Math.sin(a) * maxDistance);
+        p2.set(body.getWorldPoint(offset));
 
         intersected = null;
 
         bestDist = -1;
-        body.getWorld().rayCast(this, p1, p2);
+        
+        if (!p1.equals(p2))
+            body.getWorld().rayCast(this, p1, p2);
 
         if (intersected == null) {
             pint.set(p1);

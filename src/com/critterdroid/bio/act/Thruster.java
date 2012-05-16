@@ -18,18 +18,21 @@ import jcog.critterding.OutputNeuron;
 public class Thruster extends OutputNeuron {
     private final Body body;
     private final float angle;
-    private final float force = 10f;
+    private final float force;
     private final Shape shape;
     private boolean fired = false;
     private int remainingFrames = 0;
-    private int maxRemainingFrames = 40;
+    private int maxRemainingFrames = 20;
     private int addFrames = 7;
     Color c = new Color();
+    private final boolean absolute;
  
-    public Thruster(Body b, float angle) {
+    public Thruster(Body b, float angle, boolean absolute, float force) {
         super();
         this.body = b;
         this.angle = angle;
+        this.absolute = absolute;
+        this.force = force;
         this.shape = body.getFixtureList().get(0).getShape();
                 
     }
@@ -40,12 +43,20 @@ public class Thruster extends OutputNeuron {
     public void onFired() {
         super.onFired();
         
-        v.set((float)Math.cos(angle), (float)Math.sin(angle));
+        final float a = getAngle();
+        v.set((float)Math.cos(a), (float)Math.sin(a));
         v.mul(force);
         
         body.applyForceToCenter(v);
         
         fired = true;
+    }
+    
+    public float getAngle() {
+        if (absolute)
+            return angle;
+        else
+            return body.getAngle() + angle;
     }
 
     public void draw(App app) {
@@ -56,7 +67,8 @@ public class Thruster extends OutputNeuron {
         }
         
         if (remainingFrames > 0) {
-            float rangle = body.getAngle() + angle + (float)Math.PI;
+            
+            float rangle = getAngle() + (float)Math.PI;
             float radius = app.getRadius(shape);
 
             float cf = ((float)remainingFrames)/((float)maxRemainingFrames);
@@ -70,7 +82,7 @@ public class Thruster extends OutputNeuron {
             
             float arc = -0.2f;
             int numFlames = 6;
-            float d = angle - arc/2.0f;
+            float d = -arc/2.0f;
             
             for (int i = 0; i < numFlames; i++) {
                 final float ca = (float)Math.cos(rangle+d);

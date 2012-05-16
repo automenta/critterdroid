@@ -25,6 +25,8 @@ public class BeccaBrain extends Brain {
     private int outputChangeMagnitude = 0;
     private PrintWriter beccaOut = null;
     private BufferedReader beccaIn = null;
+    private int historySize;
+    private float[][] history;
     
     public BeccaBrain() {
         this(0, 0);        
@@ -62,12 +64,17 @@ public class BeccaBrain extends Brain {
         return rewardFunction;
     }
     
-    public void init(float featureMultiplier, RewardFunction initialRewardFunction) {
+    public void init(float featureMultiplier, int historySize, RewardFunction initialRewardFunction) {
         setRewardFunction(initialRewardFunction);
         
-        int numFeatures = (int)Math.ceil(featureMultiplier * ( getNumInputs() + getNumOutputs() ));
+        this.historySize = historySize;
+        if (historySize > 0)
+            this.history = new float[historySize][getNumInputs()];
         
-        System.out.println("Initializing BECCA: " + getNumInputs() + " inputs, " + getNumOutputs() + " outputs, " + numFeatures + " features");
+        int numFeatures = (int)Math.ceil(featureMultiplier * ( getTotalInputs() + getNumOutputs() ));
+        int numPrimitives = getNumOutputs();
+        
+        System.out.println("Initializing BECCA: " + getNumInputs() + " actual inputs, " + getTotalInputs() + " total inputs, " + getNumOutputs() + " outputs, " + numFeatures + " features");
         
         
         
@@ -97,8 +104,12 @@ public class BeccaBrain extends Brain {
 //                out.println(fromUser);
 //        }
         
-        getBeccaResult("init(" + getNumInputs() + ", " + getNumOutputs() + "," + numFeatures + ")");
+        getBeccaResult("init(" + getTotalInputs() + ", " + numPrimitives + "," + getNumOutputs() + "," + numFeatures + ")");
         
+    }
+    
+    public int getTotalInputs() {
+        return getNumInputs() * (historySize+1);
     }
     
     public String getBeccaResult(String cmd) {
@@ -183,15 +194,32 @@ public class BeccaBrain extends Brain {
                 //String act = "act( [0.3, 0.6], 0.2 )";
                 StringBuffer sensorList = new StringBuffer();
                 for (int i = 0; i < getNumInputs(); i++)
-                    sensorList.append((float)getInput(i).getInput() + ((i == getNumInputs() - 1) ? "" : ","));
+                    sensorList.append((float)getInput(i).getInput() + ",");
+                for (int j = 0; j < historySize; j++) {
+                    for (int i = 0; i < getNumInputs(); i++) {
+                        sensorList.append(history[j][i] + ",");
+                    }
+                }
 
-                String act = "act( [" + sensorList + "], " + (float)getReward() + ")";        
+                
+                String act = "act( [" + sensorList.substring(0, sensorList.length()-1) + "], " + (float)getReward() + ")";        
 
                 result = getBeccaResult(act);
  
-                if (cycle % 100 == 0)
-                    plots();
-                 
+                //shift history
+                if (historySize > 0) {
+                    for (int j = historySize-2; j >= 0; j--) {
+                        for (int i = 0; i < getNumInputs(); i++) {
+                            history[j+1][i] = history[j][i];
+                        }
+
+                    }
+                    for (int i = 0; i < getNumInputs(); i++) {
+                        history[0][i] = (float)getInput(i).getInput();
+                    }
+                }
+                
+
             }                
         });
         
@@ -207,7 +235,7 @@ public class BeccaBrain extends Brain {
     public static void main(String[] args) throws Exception {
         BeccaBrain b = new BeccaBrain(7, 7);
         
-        b.init(6, new RewardFunction() {
+        b.init(6, 0, new RewardFunction() {
             @Override
             public float getReward() {
                 return (float)Math.random();

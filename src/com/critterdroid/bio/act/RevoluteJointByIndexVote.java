@@ -17,7 +17,8 @@ public class RevoluteJointByIndexVote  {
     
     private float wiggle = 0.01f;
     
-    final float maxTorque = 1.0f;
+    float motorSpeed = 1f;
+    final float maxTorque = 0.1f;
     
     float dr = 0;
     private final float range;
@@ -27,7 +28,6 @@ public class RevoluteJointByIndexVote  {
 
     float stepMomentum = 0.95f;
     float rotationMomentum = 0.05f;
-    float motorSpeed = 15f;
     
     protected final float angleFrom;
     private float lastAngle;
