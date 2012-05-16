@@ -10,7 +10,7 @@ public class OutputNeuron implements CritterdingNeuron, com.syncleus.dann.neural
      * @return  whether changed
      */
     public boolean setFiring(boolean f) {
-        if (firing!=f) {
+//        if (firing!=f) {
             firing = f;
 
             if (f == false)
@@ -19,8 +19,8 @@ public class OutputNeuron implements CritterdingNeuron, com.syncleus.dann.neural
                 onFired();
             
             return true;
-        }
-        return false;
+//        }
+//        return false;
     }
     
     @Override

@@ -12,7 +12,7 @@ import java.util.logging.Logger;
 import jcog.critterding.OutputNeuron;
 
 /**
- * High-performance interface to BECCA cognition engine ( http://openbecca.org )
+ * Interface to BECCA cognition engine ( http://openbecca.org )
  * which runs on python 2.7 + numpy 1.6 
  * @author me
  */
@@ -41,10 +41,6 @@ public class BeccaBrain extends Brain {
         if (getNumOutputs() > 0)
             return ((float)outputChangeMagnitude) / ((float)getNumOutputs());
         return 0;
-    }
-    
-    public static interface RewardFunction {
-        public float getReward();
     }
     
     public BeccaBrain(final int numInputs, final int numOutputs) {
@@ -122,31 +118,6 @@ public class BeccaBrain extends Brain {
         return "";
     }
     
-//    public static String getBeccaResult(String host, int port, String cmd) {
-//        return getResult("nc " + host + " " + port, cmd);
-//    }
-//    
-//    public static String getResult(String ncCmd, String cmd) {
-//        try {
-//            Process child = Runtime.getRuntime().exec(ncCmd);
-//            
-//            PrintStream ps = new PrintStream(child.getOutputStream());
-//            ps.println(cmd);
-//            ps.flush();
-//            
-//            BufferedReader stdInput = new BufferedReader(new InputStreamReader(child.getInputStream()));
-//
-//            StringBuffer sb = new StringBuffer();
-//            String s;
-//            while ((s = stdInput.readLine()) != null) {
-//                sb.append(s);
-//            }                
-//            return sb.toString();
-//            
-//        } catch (IOException e) {
-//            return "";
-//        }
-//    }
 
     public float getReward() {
         if (rewardFunction!=null)
@@ -193,8 +164,12 @@ public class BeccaBrain extends Brain {
             public void run() {
                 //String act = "act( [0.3, 0.6], 0.2 )";
                 StringBuffer sensorList = new StringBuffer();
-                for (int i = 0; i < getNumInputs(); i++)
-                    sensorList.append((float)getInput(i).getInput() + ",");
+                for (int i = 0; i < getNumInputs(); i++) {
+                    final float x = (float)getInput(i).getInput();
+//                    if (x < 0)
+//                        System.err.println("NEGATIVE VALUE: " + i + "=" + x);
+                    sensorList.append(x + ",");
+                }
                 for (int j = 0; j < historySize; j++) {
                     for (int i = 0; i < getNumInputs(); i++) {
                         sensorList.append(history[j][i] + ",");

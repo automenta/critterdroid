@@ -21,9 +21,9 @@ public class Thruster extends OutputNeuron {
     private final float force;
     private final Shape shape;
     private boolean fired = false;
-    private int remainingFrames = 0;
-    private int maxRemainingFrames = 20;
-    private int addFrames = 7;
+    private int temperature = 0;
+    private int maxTemperature = 20;
+    private int addTemperature = 7;
     Color c = new Color();
     private final boolean absolute;
  
@@ -47,8 +47,9 @@ public class Thruster extends OutputNeuron {
         v.set((float)Math.cos(a), (float)Math.sin(a));
         v.mul(force);
         
-        body.applyForceToCenter(v);
-        
+        //TODO add parameter to toggle between applying force or linear impulse
+        //body.applyForceToCenter(v);
+        body.applyLinearImpulse(v, body.getWorldCenter());
         fired = true;
     }
     
@@ -61,17 +62,17 @@ public class Thruster extends OutputNeuron {
 
     public void draw(App app) {
         if (fired) {
-            remainingFrames += addFrames;
-            remainingFrames = Math.min(remainingFrames, maxRemainingFrames);
+            temperature += addTemperature;
+            temperature = Math.min(temperature, maxTemperature);
             fired = false;
         }
         
-        if (remainingFrames > 0) {
+        if (temperature > 0) {
             
             float rangle = getAngle() + (float)Math.PI;
             float radius = app.getRadius(shape);
 
-            float cf = ((float)remainingFrames)/((float)maxRemainingFrames);
+            float cf = ((float)temperature)/((float)maxTemperature);
             c.set(1f, 1f, 1f, 0.1f + 0.9f * cf );
             
             App.setColor(c);
@@ -101,9 +102,13 @@ public class Thruster extends OutputNeuron {
             }
 
 
-            remainingFrames--;
+            temperature--;
         }
 
+    }
+
+    public int getTemperature() {
+        return temperature;
     }
     
     
